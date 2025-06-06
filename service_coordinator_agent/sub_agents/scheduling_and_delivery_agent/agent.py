@@ -1,7 +1,6 @@
 from google.adk.agents import Agent
 import google.adk.tools.tool_context as ToolContext
 import requests
-
 import random
 from typing import Optional, List, Dict
 from pydantic import BaseModel
@@ -25,10 +24,12 @@ class SchedulingOutput(BaseModel):
     confirmed_date: Optional[str] = None
     confirmed_time: Optional[str] = None
     delivery_mode: Optional[str] = None
+    delivery_price: Optional[float] = None
+    total_cart_value: Optional[float] = None
     message: str
 
 # Refactored Function (no longer takes ToolContext directly)
-def scheduling_tool(tool_context: ToolContext, selected_date: Optional[str]= None, selected_time: Optional[str]= None) -> SchedulingOutput:
+def scheduling_tool(tool_context: ToolContext, selected_date: Optional[str] = None, selected_time: Optional[str] = None) -> SchedulingOutput:
     """
     Determines available delivery dates and times for the services based on the items in the cart.
     Also determines the best possible service date and delivery mode.
@@ -73,26 +74,44 @@ def scheduling_tool(tool_context: ToolContext, selected_date: Optional[str]= Non
         item_count = len(cart_details)
 
         if item_count >= 5 or total_cart_value > 1000:
-            delivery_mode = "Scheduled Delivery"
+            delivery_mode = "Truck Delivery"
+            delivery_price = 500.0  # Example price for truck delivery
         elif total_cart_value > 200:
-            delivery_mode = "Express Delivery"
+            delivery_mode = "Parcel Delivery"
+            delivery_price = 100.0  # Example price for express delivery
         else:
             delivery_mode = "Standard Delivery"
+            delivery_price = 50.0  # Example price for standard delivery
+
+        if interaction_state.get("click_and_collect_enabled") and total_cart_value < 500:
+            delivery_mode = "Click & Collect"
 
         interaction_state["confirmed"] = True
-        print(f"Scheduling confirmed for {selected_date} at {selected_time} with delivery mode: {delivery_mode}")
-        res = SchedulingOutput(
+        print(f"Scheduling confirmed for {selected_date} at {selected_time} with delivery mode: {delivery_mode} and price: {delivery_price}")
+        schedulingOutput = SchedulingOutput(
             confirmed_date=selected_date,
             confirmed_time=selected_time,
             delivery_mode=delivery_mode,
-            message=f"Delivery scheduled on {selected_date} at {selected_time} via {delivery_mode}."
+            delivery_price=delivery_price,
+            message=f"Delivery scheduled on {selected_date} at {selected_time} via {delivery_mode} at {delivery_price}.",
+            total_cart_value=total_cart_value
         )
-        print(f"Scheduling output: {res}")
+        print(f"Scheduling output: {schedulingOutput}")
+        # sav the message to the tool context state
+        tool_context.state["message"] = schedulingOutput.message
+        tool_context.state["delivery_price"] = schedulingOutput.delivery_price
+        tool_context.state["delivery_mode"] = schedulingOutput.delivery_mode
+        tool_context.state["confirmed_date"] = schedulingOutput.confirmed_date
+        tool_context.state["confirmed_time"] = schedulingOutput.confirmed_time
+        tool_context.state["total_cart_value"] = schedulingOutput.total_cart_value
+
         return SchedulingOutput(
             confirmed_date=selected_date,
             confirmed_time=selected_time,
             delivery_mode=delivery_mode,
-            message=f"Delivery scheduled on {selected_date} at {selected_time} via {delivery_mode}."
+            delivery_price=delivery_price,
+            message=f"Delivery scheduled on {selected_date} at {selected_time} via {delivery_mode} at {delivery_price}.",
+            total_cart_value=total_cart_value
         )
 
     return SchedulingOutput(message="Please provide both selected_date and selected_time to confirm scheduling.")
@@ -109,14 +128,14 @@ scheduling_and_delivery_agent = Agent(
         1. Retrieve items in the user's cart from the tool context.
         2. Use the `scheduling_tool` to present available delivery dates and times.
         3. Ask the user to choose a preferred delivery slot interactively.
-        4. Accept user input for the selected date and time
-        5. On receiving the user's selection, call the `scheduling_tool` again with the selected date and time to confirm the delivery and determine the delivery mode.
+        4. Accept user input for the selected date and time.
+        5. On receiving the user's selection, call the `scheduling_tool` again with the selected date and time to confirm the delivery and determine the delivery mode and price.
+        6. Return the confirmed delivery date, time, mode, and price to the user.
 
         Important:
         - Do not guess or fabricate services.
         - Only use the `scheduling_tool` to determine available and confirmed delivery slots.
         - If the user has not yet selected a slot, prompt them using the output of `scheduling_tool`.
-        - Handle inputs interactively via the tool context (`tool_conte
         """,
     sub_agents=[],
     tools=[scheduling_tool]

@@ -87,6 +87,8 @@ def fetch_service_prices(eligible_items, retail_id, zip_code):
         name = item.get("name", "Unknown Product")
         quantity = item.get("quantity", 1)
 
+        price = item.get("price", 0.0)  # Ensure price is set, default to 0.0
+
         print(f"🛠️ Processing item: {name} (ID: {item_id}, Qty: {quantity})")
 
         # Defensive: Look up pricing safely
@@ -125,6 +127,8 @@ def fetch_service_prices(eligible_items, retail_id, zip_code):
         print ("Updated cart item:", {
             "name": name,
             "id": item_id,
+            "price": price,
+            "quantity": quantity,
             "service_eligible": bool(services),
             "services": services
         })
@@ -132,6 +136,8 @@ def fetch_service_prices(eligible_items, retail_id, zip_code):
         updated_cart.append({
             "name": name,
             "id": item_id,
+            "price": price,
+            "quantity": quantity,
             "service_eligible": bool(services),
             "services": services
         })
@@ -168,7 +174,6 @@ def service_matcher_tool(tool_context: ToolContext, retail_id: str, zip_code: st
         return {"error": "No service-eligible items found in the cart."}
 
     updated_cart = fetch_service_prices(eligible_items, retail_id, zip_code)
-    
     tool_context.state["cart_details"] = updated_cart
 
     return updated_cart
