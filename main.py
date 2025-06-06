@@ -23,47 +23,7 @@ initial_state = {
             "quantity": 1,
             "itemType": "ART",
             "price": 79.99
-        },
-        {
-            "name": "Kitchen Cabinet Base",
-            "sku": "KIT-005",
-            "id": "50263838",
-            "quantity": 2,
-            "itemType": "ART",
-            "price": 199.99
-        },
-        {
-            "name": "Platsa Wardrobe Frame",
-            "sku": "FURN-003",
-            "id": "40395245",
-            "quantity": 1,
-            "itemType": "ART",
-            "price": 120.00
-        },
-        {
-            "name": "Office Chair Markus",
-            "sku": "FURN-002",
-            "id": "50481469",
-            "quantity": 1,
-            "itemType": "ART",
-            "price": 199.99
-        },
-        {
-            "name": "LED Lightbulb E27 400lm",
-            "sku": "ACC-004",
-            "id": "90395243",
-            "quantity": 4,
-            "itemType": "ART",
-            "price": 9.99
-        },
-        {
-            "name": "LACK Wall Shelf",
-            "sku": "FURN-006",
-            "id": "60481647",
-            "quantity": 2,
-            "itemType": "ART",
-            "price": 19.99
-        },
+        }
     ],
     "interaction_history": []
 }

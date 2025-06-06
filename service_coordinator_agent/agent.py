@@ -1,11 +1,24 @@
 
+# agent.py
+import asyncio
+from dotenv import load_dotenv
 from google.adk.agents import Agent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from service_coordinator_agent.utils import add_user_query_to_history, call_agent_async
+
+# Import sub-agents
 from .sub_agents.cart_analyzer_agent.agent import cart_analyzer_agent
-from .sub_agents.confirmation_agent.agent import confirmation_agent
 from .sub_agents.service_matcher_agent.agent import service_matcher_agent
 from .sub_agents.upsell_recommender_agent.agent import upsell_recommender_agent
 from .sub_agents.rag_agent.agent import rag_agent
 from .sub_agents.scheduling_and_delivery_agent.agent import scheduling_and_delivery_agent
+from .sub_agents.optimizer_agent.agent import optimizer_agent
+
+# ==============================
+# Main Root Agent Definition
+# ==============================
+
 # This is the main agent that coordinates the execution of multiple service agents.
 root_agent = Agent(
     name="service_coordinator_agent",
@@ -32,24 +45,81 @@ root_agent = Agent(
     - scheduling_and_delivery_agent: Schedules services for the items in the cart based on the analysis provided by the service_matcher_agent.
                                     Interacts with the user in two phases:First, presents available delivery dates and time slots using the `scheduling_tool`.
                                     Then, waits for the user to select a preferred slot (date and time).On confirmation, the sub-agent returns the scheduled date, time, and appropriate delivery mode based on cart contents.
-    - confirmation_agent: Confirms the execution of service agents and ensures the customer understands how to proceed.
+    -optimizer_agent: Optimizes the cart by suggesting additional items or services that complement the existing products to enhance the overall cart value and customer satisfaction.
     You will use these sub-agents to complete the tasks assigned to you.
     You will not use any tools directly, but will rely on the sub-agents to perform the necessary actions.
     You will ensure that the execution of service agents is efficient and effective, and that the customer understands how to proceed with the services.
-
-
-    <user_info>
-    Name: {user_name}
-    </user_info>
-
-    <cart_info>
-    Cart Details: {cart_details}
-    </cart_info>
-
-    <interaction_history>
-    {interaction_history}
-    </interaction_history>
         """,
-    sub_agents=[cart_analyzer_agent, service_matcher_agent, rag_agent, upsell_recommender_agent, scheduling_and_delivery_agent , confirmation_agent],
+    sub_agents=[cart_analyzer_agent, service_matcher_agent, rag_agent, upsell_recommender_agent, scheduling_and_delivery_agent , optimizer_agent],
+
     tools=[],
 )
+
+# ==============================
+# Optional CLI Runner Entry Point
+# ==============================
+
+def start_interactive_session():
+    asyncio.run(_main_async())
+
+async def _main_async():
+    load_dotenv()
+    session_service = InMemorySessionService()
+    print("Initializing session service..********************.")
+    initial_state = {
+        "user_name": "IKEA Customer",
+        "cart_details": [
+            {
+                "name": "Kallax Shelf Unit",
+                "sku": "FURN-001",
+                "id": "00263850",
+                "quantity": 1,
+                "itemType": "ART",
+                "price": 79.99
+            }
+        ],
+        "interaction_history": []
+    }
+
+    APP_NAME = "IKEA Support"
+    USER_ID = "aiwithshrabani"
+
+    new_session = session_service.create_session(
+        app_name=APP_NAME,
+        user_id=USER_ID,
+        state=initial_state
+    )
+    SESSION_ID = new_session.id
+
+    runner = Runner(
+        agent=root_agent,
+        app_name=APP_NAME,
+        session_service=session_service,
+    )
+
+    print("\nWelcome to Customer Service Chat!")
+    print("Type 'exit' or 'quit' to end the conversation.\n")
+
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() in ["exit", "quit"]:
+            print("Ending conversation. Goodbye!")
+            break
+
+        add_user_query_to_history(
+            session_service, APP_NAME, USER_ID, SESSION_ID, user_input
+        )
+
+        await call_agent_async(runner, USER_ID, SESSION_ID, user_input)
+
+    final_session = session_service.get_session(
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
+    )
+
+    print("\nFinal Session State:")
+    for key, value in final_session.state.items():
+        print(f"{key}: {value}")
+
+# Only run if this script is executed directly
+if __name__ == "__main__":
+    start_interactive_session()
