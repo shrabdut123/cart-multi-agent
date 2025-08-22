@@ -1,0 +1,3826 @@
+openapi: 3.0.1
+info:
+  title: Sales Item API
+  description: >
+    Get information for items in different contexts. Note that this is an
+    extendable interface that might introduce new types without increase in
+    major version including new values in enumerations.
+  contact:
+    email: paul.eriksson@ingka.ikea.com
+  version: 1.45.0
+  x-ibm-name: Sales Item API
+servers:
+  - url: https://api.salesitem.ingka.com
+    description: PROD Global
+  - url: https://api.salesitem.ikea.cn
+    description: PROD China
+security:
+  - clientIDHeader: []
+tags:
+  - name: Sales Item
+    description: Sales Item API
+paths:
+  "/availabilityclassifications/{classUnitType}/{classUnitCode}":
+    get:
+      tags:
+        - Availability Classification
+      summary: Get availability classification information (operational range) of the
+        choosen class unit. Used to get a complete list of items based on at
+        least one classification type. Please note that you have to specify
+        either the `itemNos` query parameter or the `type` query parameter.
+      description: Get the current list of itemsAvailabilityClassifications
+      operationId: GetItemAvailabilityClassifications
+      parameters:
+        - name: classUnitType
+          in: path
+          description: >
+            `classUnitType` must be Retail Unit (`ru`). It is used together with
+            `classUnitCode` to give context when invoking
+            AvailabilityClassifications API.
+
+
+            Retail Unit must be combined with a valid `classUnitCode`. For example, `SE` for Sweden or `DE` for Germany.
+
+
+            A list of valid Retail Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            type: string
+            enum:
+              - ru
+          x-proto-tag: 1
+        - name: classUnitCode
+          in: path
+          description: >
+            `classUnitCode` is the unique identifier of a Class Unit when
+            combined with a `classUnitType`.
+
+
+            A valid `classUnitCode` always has a pattern like `^([A-Z]|[0-9]){2,5}$`. Note that the Selling Range APIs are case insensitive when it comes to the `classUnitCode` path parameter and lower case is always internally converted to upper case.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            maxLength: 5
+            minLength: 2
+            type: string
+          x-proto-tag: 2
+        - name: channel
+          in: query
+          description: Optional filter to find a rule for a specific channel. If not
+            passed all channels are returned. ALL indicates channel independent.
+          schema:
+            type: string
+            enum:
+              - CUSTOMER_SUPPORT_CENTRE
+              - STORE
+              - ONLINE
+              - ALL
+          x-proto-tag: 6
+        - name: type
+          in: query
+          description: Optional filter to find a specific classification type. If not
+            passed all types are returned. CASH_AND_CARRY and HOME_DELIVERY
+            types have been decommissioned from the API response and moved to
+            the CIA API.
+          schema:
+            type: string
+            enum:
+              - CASH_AND_CARRY
+              - HOME_DELIVERY
+              - COLLECT
+              - CUSTOMER_PURCHASE
+              - CUSTOMER_COMMUNICATION
+              - PARCEL_ELIGIBLE
+              - INTENDED_FOR_HOME_DELIVERY
+            x-enum-deprecated:
+              CASH_AND_CARRY: true
+              HOME_DELIVERY: true
+          x-proto-tag: 7
+        - name: itemNos
+          in: query
+          description: One or many item numbers (maximum 50). If more than one - separated
+            by commas
+          schema:
+            maxLength: 799
+            minLength: 0
+            type: string
+          x-proto-tag: 9
+        - name: value
+          in: query
+          description: Optional filter to find a specific classification value, true or
+            false. If not passed all values are returned.
+          schema:
+            type: boolean
+          x-proto-tag: 10
+        - name: itemType
+          in: query
+          description: Optional filter to find a specific item type. If not passed all
+            types are returned.
+          schema:
+            type: string
+            enum:
+              - ART
+              - SPR
+          x-proto-tag: 12
+      responses:
+        "200":
+          description: Success
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "400":
+          description: Bad Request. Typically if one of the input parameters is found
+            incorrect.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "401":
+          description: Not Authorized
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "429":
+          description: Too Many Requests
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/availabilityClassificationResponse"
+    x-options:
+      file: item_availability_classification.proto
+      go_package: availabilityclassification
+      java_outer_classname: ItemAvailabilityClassificationProto
+      java_package: com.ikea.rix.range.model
+      package: ikea.rix.salesitem.availabilityclassification
+  "/communications/{classUnitType}/{classUnitCode}":
+    get:
+      tags:
+        - Communication
+      summary: Get global product information mainly managed by IoS.
+      description: Get global product information mainly managed by IoS.
+      operationId: GetItemCommunications
+      parameters:
+        - name: classUnitType
+          in: path
+          description: >
+            `classUnitType` can be either Retail Unit/Market (`ru`) or Store
+            (`sto`). `classUnitType` and `classUnitCode` gives a context of
+            Class Unit when invoking one of the Selling Range APIs.
+
+
+            When a Retail Unit is requested, it must be combined with a valid `classUnitCode` of a Retail Unit. For example, `SE` for Sweden or `DE` for Germany.
+
+
+            When a Store is requested, it must be combined with a valid `classUnitCode` of a Store. For example, `445` for the Malmö store.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            type: string
+            enum:
+              - ru
+              - sto
+          x-proto-tag: 1
+        - name: classUnitCode
+          in: path
+          description: >
+            `classUnitCode` is the unique identifier of a Class Unit when
+            combined with a `classUnitType`.
+
+
+            A valid `classUnitCode` always has a pattern like `^([A-Z]|[0-9]){2,5}$`. Note that the Selling Range APIs are case insensitive when it comes to the `classUnitCode` path parameter and lower case is always internally converted to upper case.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            maxLength: 5
+            minLength: 2
+            type: string
+          x-proto-tag: 2
+        - name: itemNos
+          in: query
+          description: >
+            Item number is an unique identifier of an IKEA item/product in the
+            Selling Range APIs. The Selling Range APIs only support the `ART`,
+            `SGR` and `SPR` item types and there is no overlap between item
+            numbers when considering those item types.
+
+
+            The Selling Range APIs support between 1 (single request) and 50 (batch request) item numbers per request. Considering that caching is hard for batch requests, it is recommended to do concurrent single requests instead of a batch request.
+          required: true
+          schema:
+            maxLength: 799
+            minLength: 8
+            type: string
+          x-proto-tag: 3
+        - name: languageCode
+          in: query
+          description: Language code filter to be used in returned content. Returns all if
+            not defined.
+          schema:
+            maxLength: 2
+            minLength: 2
+            pattern: ^[a-z][a-z]$
+            type: string
+          x-proto-tag: 4
+        - name: expand
+          in: query
+          description: Optional filter to return complete information for child items in
+            the ItemCommunication API. By default only `itemKey` and `quantity`
+            is returned.
+          schema:
+            type: string
+            enum:
+              - ChildItems
+          x-proto-tag: 11
+        - name: fallbackLanguage
+          in: query
+          description: FallbackLanguage returns localisedCommunications in the fallback
+            language, if available and the requested languageCode is not
+            available.
+          schema:
+            maxLength: 2
+            minLength: 2
+            pattern: ^[a-z][a-z]$
+            type: string
+          x-proto-tag: 5
+        - name: businessContext
+          in: query
+          description: >
+            Optional filter to return data from a specific business context.
+
+
+            Available value is `AsIs`, which will expose fields suitable for After Sales Communication (As Is) instead of their regular counterparts.
+
+
+            Currently only supported for `benefits` and `benefitSummary` which will be exposed as `benefitsAsIs` and `benefitSummaryAsIs` if the `businessContext` parameter is set to `AsIs`.
+          schema:
+            type: string
+            enum:
+              - AsIs
+          x-proto-tag: 12
+      responses:
+        "200":
+          description: Success
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "206":
+          description: Partial Content
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "400":
+          description: Bad Request. Typically if one of the input parameters is found
+            incorrect.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "401":
+          description: Not Authorized
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "429":
+          description: Too Many Requests
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/communicationResponse"
+    x-options:
+      file: item_communication.proto
+      go_package: api
+      java_outer_classname: ItemCommunicationProto
+      java_package: com.ikea.rix.pim.model
+      package: ikea.rix.salesitem.communication
+  "/genericproducts/{classUnitType}/{classUnitCode}":
+    get:
+      tags:
+        - GenericProduct
+      summary: Get Generic Product communication.
+      description: Get generic product communication.
+      operationId: GetGenericProductCommunication
+      parameters:
+        - name: classUnitType
+          in: path
+          description: >
+            `classUnitType` can be either Retail Unit/Market (`ru`) or Store
+            (`sto`). `classUnitType` and `classUnitCode` gives a context of
+            Class Unit when invoking one of the Selling Range APIs.
+
+
+            When a Retail Unit is requested, it must be combined with a valid `classUnitCode` of a Retail Unit. For example, `SE` for Sweden or `DE` for Germany.
+
+
+            When a Store is requested, it must be combined with a valid `classUnitCode` of a Store. For example, `445` for the Malmö store.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            type: string
+            enum:
+              - ru
+              - sto
+          x-proto-tag: 1
+        - name: classUnitCode
+          in: path
+          description: >
+            `classUnitCode` is the unique identifier of a Class Unit when
+            combined with a `classUnitType`.
+
+
+            A valid `classUnitCode` always has a pattern like `^([A-Z]|[0-9]){2,5}$`. Note that the Selling Range APIs are case insensitive when it comes to the `classUnitCode` path parameter and lower case is always internally converted to upper case.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            maxLength: 5
+            minLength: 2
+            type: string
+          x-proto-tag: 2
+        - name: gprNos
+          in: query
+          description: One or many gpr numbers (maximum 50). If more than one - separated
+            by commas
+          required: true
+          schema:
+            maxLength: 799
+            minLength: 5
+            type: string
+          x-proto-tag: 3
+        - name: languageCode
+          in: query
+          description: Language code filter to be used in returned content. Returns all if
+            not defined.
+          schema:
+            maxLength: 2
+            minLength: 2
+            pattern: ^[a-z][a-z]$
+            type: string
+          x-proto-tag: 4
+      responses:
+        "200":
+          description: Success
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "400":
+          description: Bad Request. Typically if one of the input parameters is found
+            incorrect.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "401":
+          description: Not Authorized
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "429":
+          description: Too Many Requests
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/genericProductResponse"
+    x-options:
+      file: generic_product.proto
+      go_package: api
+      java_outer_classname: GenericProductProto
+      java_package: com.ikea.rix.pim.model
+      package: ikea.rix.salesitem.genericproduct
+  "/salesprices/{classUnitType}/{classUnitCode}":
+    get:
+      tags:
+        - Sales Price
+      summary: Get sales price information of the choosen sales item. Used to
+        communicate sales price information in sales and customer communication
+        scenarios.
+      description: Get the current sales items sales price information for the given
+        item key(s) for a specific class unit (currently Business Unit with
+        correct identifier).
+      operationId: GetItemSalesPrices
+      parameters:
+        - name: classUnitType
+          in: path
+          description: >
+            `classUnitType` can be either Retail Unit/Market (`ru`) or Store
+            (`sto`). `classUnitType` and `classUnitCode` gives a context of
+            Class Unit when invoking one of the Selling Range APIs.
+
+
+            When a Retail Unit is requested, it must be combined with a valid `classUnitCode` of a Retail Unit. For example, `SE` for Sweden or `DE` for Germany.
+
+
+            When a Store is requested, it must be combined with a valid `classUnitCode` of a Store. For example, `445` for the Malmö store.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            type: string
+            enum:
+              - ru
+              - sto
+          x-proto-tag: 1
+        - name: classUnitCode
+          in: path
+          description: >
+            `classUnitCode` is the unique identifier of a Class Unit when
+            combined with a `classUnitType`.
+
+
+            A valid `classUnitCode` always has a pattern like `^([A-Z]|[0-9]){2,5}$`. Note that the Selling Range APIs are case insensitive when it comes to the `classUnitCode` path parameter and lower case is always internally converted to upper case.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            maxLength: 5
+            minLength: 2
+            type: string
+          x-proto-tag: 2
+        - name: itemNos
+          in: query
+          description: >
+            Item number is an unique identifier of an IKEA item/product in the
+            Selling Range APIs. The Selling Range APIs only support the `ART`,
+            `SGR` and `SPR` item types and there is no overlap between item
+            numbers when considering those item types.
+
+
+            The Selling Range APIs support between 1 (single request) and 50 (batch request) item numbers per request. Considering that caching is hard for batch requests, it is recommended to do concurrent single requests instead of a batch request.
+          required: true
+          schema:
+            maxLength: 799
+            minLength: 8
+            type: string
+          x-proto-tag: 3
+        - name: languageCode
+          in: query
+          description: Language code filter to be used in returned content. Returns all if
+            not defined.
+          schema:
+            maxLength: 2
+            minLength: 2
+            pattern: ^[a-z][a-z]$
+            type: string
+          x-proto-tag: 4
+      responses:
+        "200":
+          description: Success
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "400":
+          description: Bad Request. Typically if one of the input parameters is found
+            incorrect.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "401":
+          description: Not Authorized
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "429":
+          description: Too Many Requests
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+    x-options:
+      file: item_sales_price.proto
+      go_package: salesprice
+      java_outer_classname: ItemSalesPriceProto
+      java_package: com.ikea.rix.range.model
+      package: ikea.rix.salesitem.salesprice
+  "/salesprices/{classUnitType}/{classUnitCode}/items/{itemNumbers}":
+    get:
+      tags:
+        - Sales Price
+      summary: Get sales price information of the choosen sales item. Used to
+        communicate sales price information in sales and customer communication
+        scenarios.
+      description: >
+        **DEPRECATED!** Please use [`this version`](#/Sales%20Price) without
+        /items/ in path.
+
+
+        Get the current sales items sales price information for the given item key(s) for a specific class unit (currently Business Unit with correct
+
+        identifier).
+      operationId: GetItemSalesPricesByItems
+      parameters:
+        - name: classUnitType
+          in: path
+          description: >
+            `classUnitType` can be either Retail Unit/Market (`ru`) or Store
+            (`sto`). `classUnitType` and `classUnitCode` gives a context of
+            Class Unit when invoking one of the Selling Range APIs.
+
+
+            When a Retail Unit is requested, it must be combined with a valid `classUnitCode` of a Retail Unit. For example, `SE` for Sweden or `DE` for Germany.
+
+
+            When a Store is requested, it must be combined with a valid `classUnitCode` of a Store. For example, `445` for the Malmö store.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            type: string
+            enum:
+              - ru
+              - sto
+          x-proto-tag: 1
+        - name: classUnitCode
+          in: path
+          description: >
+            `classUnitCode` is the unique identifier of a Class Unit when
+            combined with a `classUnitType`.
+
+
+            A valid `classUnitCode` always has a pattern like `^([A-Z]|[0-9]){2,5}$`. Note that the Selling Range APIs are case insensitive when it comes to the `classUnitCode` path parameter and lower case is always internally converted to upper case.
+
+
+            A list of valid Class Units can be found [in CBD](https://iwww.cbdview.ikea.com/) (requires VPN or internal network).
+          required: true
+          schema:
+            maxLength: 5
+            minLength: 2
+            type: string
+          x-proto-tag: 2
+        - name: itemNumbers
+          in: path
+          description: >
+            **DEPRECATED:** All APIs having `itemNumbers` as a path parameter
+            are to be considered as deprecated. Please use an equvivalent API
+            having the `itemNos` query parameter.
+
+
+            Item number is an unique identifier of an IKEA item/product in the Selling Range APIs. The Selling Range APIs only support the `ART`, `SGR` and `SPR` item types and there is no overlap between item numbers when considering those item types.
+
+
+            The Selling Range APIs support between 1 (single request) and 50 (batch request) item numbers per request. Considering that caching is hard for batch requests, it is recommended to do concurrent single requests instead of a batch request.
+          required: true
+          schema:
+            maxLength: 799
+            minLength: 8
+            type: string
+          x-proto-tag: 3
+        - name: languageCode
+          in: query
+          description: Language code filter to be used in returned content. Returns all if
+            not defined.
+          schema:
+            maxLength: 2
+            minLength: 2
+            pattern: ^[a-z][a-z]$
+            type: string
+          x-proto-tag: 4
+      responses:
+        "200":
+          description: Success
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "207":
+          description: Partial Success - one or many of the item numbers are not found.
+            Assuming correctly formed request URL (i.e. request is actually
+            reaching API provider). More information in error payload.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "400":
+          description: Bad Request. Typically if one of the input parameters is found
+            incorrect.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "401":
+          description: Not Authorized
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "404":
+          description: Not found - none of the item numbers are found. Assuming correctly
+            formed request URL (i.e. request is actually reaching API provider).
+            More information in error payload.
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "429":
+          description: Too Many Requests
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/vnd.ikea.api+json:
+              schema:
+                $ref: "#/components/schemas/salesPriceResponse"
+      deprecated: true
+    x-options:
+      file: item_sales_price.proto
+      go_package: salesprice
+      java_outer_classname: ItemSalesPriceProto
+      java_package: com.ikea.rix.range.model
+      package: ikea.rix.salesitem.salesprice
+components:
+  schemas:
+    acknowledgement:
+      type: object
+      properties:
+        isNeeded:
+          type: boolean
+          x-proto-tag: 1
+      description: All customers purchasing a product for which the
+        acknowledgement.isNeeded is true must provide an explicit declaration of
+        acknowledgement, confirming their awareness of the potential risk (e.g.,
+        tip-over) and their understanding of how to remedy it.
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    addOn:
+      type: object
+      description: AddOn item completes or complements the main item by enhancing its
+        functionality, personalization, comfort, installation, safety, care, or
+        additional functions.
+      properties:
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        relation:
+          type: string
+          enum:
+            - ADDS_ADDITIONAL_FUNCTION
+            - ADDS_CARE_AND_MAINTENANCE
+            - ADDS_COMFORT
+            - ADDS_COORDINATION
+            - ADDS_INSTALLATION
+            - ADDS_PERSONALISATION
+            - ADDS_SAFETY
+            - COMPLETES
+          x-proto-tag: 2
+        mainProductType:
+          $ref: "#/components/schemas/mainProductType"
+        catalogueReferences:
+          type: array
+          items:
+            $ref: "#/components/schemas/catalogueReference"
+          x-proto-tag: 4
+      x-reference-proto-tags:
+        itemKey: 1
+        mainProductType: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    advertisement:
+      type: object
+      properties:
+        discountType:
+          type: string
+          description: Discount Type in SDM
+          example: ITEM_LEVEL
+          enum:
+            - ItemLevel
+          x-proto-tag: 1
+        linkedItems:
+          type: array
+          description: List of items linked to the advertisement.
+          items:
+            $ref: "#/components/schemas/itemKey"
+          x-proto-tag: 5
+        localisedCommunications:
+          type: array
+          items:
+            $ref: "#/components/schemas/advertisement_localisedCommunications"
+          x-proto-tag: 6
+        validForCustomers:
+          type: array
+          description: Customers who are eligible to view the advertisement.
+          items:
+            type: string
+            enum:
+              - Regular
+              - IKEAFamily
+          x-proto-tag: 2
+        validFrom:
+          type: string
+          description: Start date of the advertisement.
+          format: date
+          x-proto-tag: 3
+        validTo:
+          type: string
+          description: End date of the advertisement.
+          format: date
+          x-proto-tag: 4
+      description: Details of advertisements on discounted item
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    advertisement_localisedCommunications:
+      type: object
+      properties:
+        countryCode:
+          $ref: "#/components/schemas/countryCode"
+        full:
+          type: string
+          description: Full advertisement text
+          example: 20% off energy-efficient appliances. Improve your kitchen routines with
+            a new refrigerator, dishwasher or induction cooktop. Hurry, this
+            IKEA Family offer ends 4/23/23.
+          x-proto-tag: 4
+        languageCode:
+          $ref: "#/components/schemas/languageCode"
+        short:
+          type: string
+          description: Short advertisement text
+          example: 20% off energy-efficient appliances
+          x-proto-tag: 3
+      x-reference-proto-tags:
+        countryCode: 2
+        languageCode: 1
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    assemblyEffort:
+      type: object
+      properties:
+        estimatedTime:
+          $ref: "#/components/schemas/estimatedTime"
+        requiredPersons:
+          type: integer
+          example: 2
+          x-nullable: true
+          x-proto-tag: 3
+        requiredTools:
+          type: array
+          items:
+            $ref: "#/components/schemas/requiredTool"
+          x-nullable: true
+          x-proto-tag: 4
+        type:
+          type: string
+          example: CUSTOMER_ASSEMBLY
+          enum:
+            - CUSTOMER_ASSEMBLY
+          x-proto-tag: 1
+      x-reference-proto-tags:
+        estimatedTime: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    availabilityClassification:
+      required:
+        - type
+        - value
+      type: object
+      properties:
+        channel:
+          type: string
+          example: ONLINE
+          enum:
+            - CUSTOMER_SUPPORT_CENTRE
+            - STORE
+            - ONLINE
+            - ALL
+          x-proto-tag: 2
+        type:
+          type: string
+          description: >
+            NB! CASH_AND_CARRY and HOME_DELIVERY types have been decommissioned
+            from the API response and moved to the CIA API.
+          example: CUSTOMER_PURCHASE
+          enum:
+            - CASH_AND_CARRY
+            - HOME_DELIVERY
+            - COLLECT
+            - CUSTOMER_PURCHASE
+            - CUSTOMER_COMMUNICATION
+            - PARCEL_ELIGIBLE
+            - INTENDED_FOR_HOME_DELIVERY
+          x-enum-deprecated:
+            CASH_AND_CARRY: true
+            HOME_DELIVERY: true
+          x-proto-tag: 3
+        value:
+          type: boolean
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.availabilityclassifications.v1
+    availabilityClassificationResponse:
+      type: object
+      properties:
+        data:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/itemAvailabilityClassification"
+          x-proto-tag: 1
+        error:
+          $ref: "#/components/schemas/status"
+        traceId:
+          $ref: "#/components/schemas/traceId"
+      x-reference-proto-tags:
+        error: 2
+        traceId: 3
+      x-options:
+        package: ingka.sellingrange.availabilityclassifications.v1
+    backoffToHero:
+      type: object
+      properties:
+        heroes:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemHero"
+          x-nullable: true
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    breathTakingItem:
+      type: boolean
+      description: Deprecated - use productTags instead
+      default: true
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    businessStructure:
+      type: object
+      properties:
+        homeFurnishingBusinessName:
+          type: string
+          example: Secondary storage
+          x-proto-tag: 6
+        homeFurnishingBusinessNo:
+          type: string
+          example: "19"
+          x-proto-tag: 5
+        productAreaName:
+          type: string
+          example: Secondary storage units
+          x-proto-tag: 2
+        productAreaNo:
+          type: string
+          example: "1912"
+          x-proto-tag: 1
+        productRangeAreaName:
+          type: string
+          example: Secondary storage range
+          x-proto-tag: 4
+        productRangeAreaNo:
+          type: string
+          example: "191"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    careInstructionText:
+      type: object
+      properties:
+        careInstructionText:
+          type: string
+          example: Do not wash.
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    catalogueReference:
+      type: object
+      properties:
+        catalogueId:
+          type: string
+          example: products
+          x-proto-tag: 1
+        categoryId:
+          type: string
+          example: fu001
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    certificationMedia:
+      type: object
+      properties:
+        altText:
+          type: string
+          description: Alternate text for image
+          example: IKEA Stofftier Djungelskog 00402808 von Stiftung Warentest mit gut
+            (1,7) ausgezeichnet Ausgabe 11/2020
+          x-proto-tag: 2
+        displayText:
+          type: string
+          description: Text to be displayed instead of image when space is limited
+          example: Von Stiftung Warentest mit gut (1,7) ausgezeichnet
+          x-proto-tag: 5
+        mediaInfoURL:
+          type: string
+          description: Link to test institutes website for additional information
+          example: www.test.de
+          x-proto-tag: 3
+        type:
+          type: string
+          example: MEDIA_TYPE_BEST_IN_TEST, MEDIA_TYPE_CONSUMER_AWARDS,
+            MEDIA_TYPE_DESIGN_AWARDS,
+            MEDIA_TYPE_MARKET_SPECIFIC_SAFETY_STANDARDS,
+            MEDIA_TYPE_INDUSTRY_TESTING_CERTIFICATIONS
+          x-proto-tag: 1
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/mediaVariant"
+          x-proto-tag: 4
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    classFilter:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "11211"
+          x-proto-tag: 1
+        name:
+          type: string
+          example: Material
+          x-proto-tag: 2
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/classFilterValue"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    classFilterValue:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "33333"
+          x-proto-tag: 1
+        name:
+          type: string
+          example: Fabric
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    classUnitKey:
+      required:
+        - classUnitCode
+        - classUnitType
+      type: object
+      properties:
+        classUnitCode:
+          maxLength: 5
+          minLength: 2
+          type: string
+          description: Class unit code (for example 'SE' or '445')
+          example: "445"
+          x-proto-tag: 2
+        classUnitType:
+          type: string
+          description: "Class unit type (Currently supported: STO,RU)"
+          example: STO
+          enum:
+            - RU
+            - STO
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.common.v1
+    communicationResponse:
+      required:
+        - data
+      type: object
+      properties:
+        data:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/itemCommunication"
+          x-proto-tag: 1
+        error:
+          $ref: "#/components/schemas/status"
+        traceId:
+          $ref: "#/components/schemas/traceId"
+      x-reference-proto-tags:
+        error: 2
+        traceId: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    complementaryItem:
+      type: object
+      properties:
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        type:
+          type: string
+          enum:
+            - MUST_BE_COMPLETED_WITH
+            - MAY_BE_COMPLETED_WITH
+            - INTERIOR_FITTINGS
+            - GETS_SAFER_WITH
+            - EXPRESSION_MATCH
+            - PRODUCT_CARE
+          x-proto-tag: 2
+      x-reference-proto-tags:
+        itemKey: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    compliance:
+      required:
+        - name
+        - type
+        - value
+      type: object
+      properties:
+        name:
+          type: string
+          example: 색상
+          x-proto-tag: 2
+        type:
+          type: string
+          example: COLOUR
+          x-proto-tag: 1
+        value:
+          type: string
+          example: 제품명 또는 이미지 참조
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    complianceInformation:
+      required:
+        - sections
+        - type
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/complianceInformationSection"
+          x-proto-tag: 2
+        type:
+          type: string
+          enum:
+            - CALIFORNIA_AB_1200
+            - COUNTRY_OF_ORIGIN
+            - ENERGY_DECLARATION
+            - GENERAL_CUSTOMER_INFO
+            - INDIA_COUNTRY_OF_ORIGIN
+            - LAW_LABEL
+            - SOLID_WOOD_DECLARATION
+            - TIP_OVER_HAZARD
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    complianceInformationSection:
+      type: object
+      properties:
+        heading:
+          type: string
+          example: Holzart
+          x-proto-tag: 1
+        urls:
+          type: array
+          items:
+            $ref: "#/components/schemas/complianceUrl"
+          x-proto-tag: 4
+        values:
+          type: array
+          items:
+            type: string
+            example: "Buche (Fagus sylvatica); Land des Holzeinschlags: Republik Kroatien,
+              SLOWAKEI, SLOWENIEN"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    complianceUrl:
+      type: object
+      properties:
+        text:
+          type: string
+          example: DTSCCalSAFER
+          x-proto-tag: 2
+        url:
+          type: string
+          example: https://calsafer.dtsc.ca.gov/cms/search/?type=Chemical
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    countryCode:
+      type: string
+      example: US
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    designer:
+      required:
+        - name
+      type: object
+      properties:
+        id:
+          type: string
+          example: "11756"
+          x-proto-tag: 1
+        name:
+          type: string
+          example: Ehlen Johansson
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    detailedMeasurement:
+      type: object
+      properties:
+        textImperial:
+          type: string
+          example: 31 1/2 "
+          x-proto-tag: 4
+        textMetric:
+          type: string
+          example: 80 cm
+          x-proto-tag: 3
+        type:
+          type: string
+          example: HEIGHT_INCLUDING_BACK_CHUSHIONS
+          x-proto-tag: 1
+        typeName:
+          type: string
+          example: Height including back cushions
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    displayUnit:
+      type: object
+      properties:
+        type:
+          type: string
+          example: WEIGHT
+          enum:
+            - PIECE
+            - MULTIPACK
+            - WEIGHT
+            - VOLUME
+            - AREA
+            - METERWARE
+            - WEIGHTWARE
+          x-proto-tag: 1
+        unitInformation:
+          $ref: "#/components/schemas/unitInformation"
+      x-reference-proto-tags:
+        unitInformation: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    estimatedTime:
+      type: object
+      properties:
+        unit:
+          type: string
+          enum:
+            - MINUTES
+          x-proto-tag: 2
+        value:
+          type: integer
+          example: 30
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    experimentalItem:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the experiment, e.g. "teamname-testname"
+          x-proto-tag: 1
+        data:
+          type: string
+          description: JSON-encoded data for the feature
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    fee:
+      required:
+        - amount
+        - currencyCode
+        - type
+      type: object
+      properties:
+        amount:
+          type: number
+          description: The amount of the fee in the currency defined by the currency code
+          format: double
+          example: 1.25
+          x-proto-tag: 2
+        currencyCode:
+          maxLength: 3
+          type: string
+          description: Currency code for the fee amount
+          example: USD
+          x-proto-tag: 3
+        type:
+          maxLength: 50
+          type: string
+          description: Type of fee.
+          enum:
+            - WEEE
+            - ECO
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    filterClass:
+      type: string
+      example: rugs
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    filterInformation:
+      type: object
+      properties:
+        classFilters:
+          type: array
+          items:
+            $ref: "#/components/schemas/classFilter"
+          x-proto-tag: 3
+        measurementFilters:
+          type: array
+          items:
+            $ref: "#/components/schemas/measurementFilter"
+          x-proto-tag: 2
+        referenceMeasurementFilter:
+          $ref: "#/components/schemas/referenceMeasurementFilter"
+      description: Populated by information coming from the Retail PIM Product Data
+        Harmonizer component
+      x-reference-proto-tags:
+        referenceMeasurementFilter: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    fullLengthText:
+      type: object
+      properties:
+        subjectId:
+          type: string
+          example: "000000000000008"
+          x-proto-tag: 1
+        texts:
+          type: array
+          items:
+            $ref: "#/components/schemas/fullLengthTextDetailed"
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    fullLengthTextDetailed:
+      type: object
+      properties:
+        id:
+          type: string
+          example: MAIN_HEADLINE
+          x-proto-tag: 1
+        value:
+          type: string
+          example: A better everyday one cup at a time
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    genericProduct:
+      type: object
+      properties:
+        gprNo:
+          type: string
+          example: "03067"
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    genericProductCommunication:
+      type: object
+      properties:
+        classUnitKey:
+          $ref: "#/components/schemas/classUnitKey"
+        genericProductNo:
+          maxLength: 15
+          minLength: 5
+          type: string
+          description: The number of the `GenericProduct`.
+          example: "27969"
+          x-proto-tag: 1
+        itemKeys:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemKey"
+          x-proto-tag: 3
+        localisedCommunications:
+          type: array
+          items:
+            $ref: "#/components/schemas/genericProductLocalised"
+          x-proto-tag: 4
+        updateDateTime:
+          type: string
+          format: date-time
+          x-proto-tag: 5
+      x-reference-proto-tags:
+        classUnitKey: 2
+      x-options:
+        package: ingka.sellingrange.genericproduct.v1
+    genericProductLocalised:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          example: SE
+          x-proto-tag: 1
+        languageCode:
+          type: string
+          example: sv
+          x-proto-tag: 2
+        productName:
+          type: string
+          example: BILLY
+          x-proto-tag: 3
+        productType:
+          type: string
+          example: bokhylla
+          x-proto-tag: 4
+        selectionCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/selectionCriteria"
+          x-proto-tag: 5
+      x-options:
+        package: ingka.sellingrange.genericproduct.v1
+    genericProductResponse:
+      required:
+        - data
+      type: object
+      properties:
+        data:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/genericProductCommunication"
+          x-proto-tag: 1
+        error:
+          $ref: "#/components/schemas/status"
+        traceId:
+          $ref: "#/components/schemas/traceId"
+      x-reference-proto-tags:
+        error: 2
+        traceId: 3
+      x-options:
+        package: ingka.sellingrange.genericproduct.v1
+    itemAttachment:
+      type: object
+      properties:
+        href:
+          type: string
+          example: https://www.ikea.com/gb/en/doc/assembly_instructions/patrull__aa-428912-3_pub.pdf
+          x-proto-tag: 2
+        type:
+          type: string
+          enum:
+            - ASSEMBLY_INSTRUCTIONS
+            - GUARANTEE
+            - MANUAL
+            - SAFETY_DATA_SHEET
+            - SOFTWARE
+            - TECHNICAL_INFORMATION
+            - WOOD_DECLARATION
+            - DECLARATION_OF_CONFORMITY
+            - DISASSEMBLY_INSTRUCTIONS
+            - CUSTOMER_DISASSEMBLY_INSTRUCTIONS
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemAvailabilityClassification:
+      type: object
+      properties:
+        availabilityClassifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/availabilityClassification"
+          x-proto-tag: 3
+        classUnitKey:
+          $ref: "#/components/schemas/classUnitKey"
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        updateDateTime:
+          type: string
+          format: date-time
+          x-proto-tag: 4
+      x-reference-proto-tags:
+        classUnitKey: 1
+        itemKey: 2
+      x-options:
+        package: ingka.sellingrange.availabilityclassifications.v1
+    itemBenefit:
+      type: object
+      properties:
+        header:
+          type: string
+          example: A safe lock
+          x-proto-tag: 2
+        name:
+          type: string
+          example: PATRULL drawer/cabinet catch
+          x-proto-tag: 3
+        subject:
+          type: string
+          example: Function/solution
+          x-proto-tag: 1
+        text:
+          type: string
+          example: When your child feels like exploring the contents of cabinets and
+            drawers PATRULL drawer/cabinet catch puts a stop to all attempts.
+            But its easy for grown-ups to open - all you do is press lightly on
+            the catch.
+          x-proto-tag: 4
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemCareInstruction:
+      type: object
+      properties:
+        careInstructionHeader:
+          type: string
+          example: Cushion
+          x-proto-tag: 1
+        careInstructionTexts:
+          type: array
+          items:
+            $ref: "#/components/schemas/careInstructionText"
+          x-proto-tag: 3
+        productTypeText:
+          type: string
+          example: Inner back cushion/inner seat cushion
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemChild:
+      required:
+        - itemKey
+        - quantity
+      type: object
+      properties:
+        addOns:
+          type: array
+          items:
+            $ref: "#/components/schemas/addOn"
+          x-proto-tag: 22
+        businessStructure:
+          $ref: "#/components/schemas/businessStructure"
+        complementaryItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/complementaryItem"
+          x-proto-tag: 13
+        filterClasses:
+          type: array
+          items:
+            $ref: "#/components/schemas/filterClass"
+          x-proto-tag: 16
+        isAssemblyRequired:
+          $ref: "#/components/schemas/requiresAssembly"
+        isBreathTakingItem:
+          $ref: "#/components/schemas/breathTakingItem"
+        isNew:
+          $ref: "#/components/schemas/new"
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        itemKeyGlobal:
+          $ref: "#/components/schemas/itemKey"
+        lastChance:
+          $ref: "#/components/schemas/lastChance"
+        localisedCommunications:
+          type: array
+          items:
+            $ref: "#/components/schemas/localised"
+          x-proto-tag: 9
+        news:
+          $ref: "#/components/schemas/news"
+        numberOfPackages:
+          type: integer
+          example: 3
+          x-nullable: true
+          x-proto-tag: 8
+        productNameGlobal:
+          $ref: "#/components/schemas/name"
+        productTags:
+          type: array
+          items:
+            $ref: "#/components/schemas/productTag"
+          x-proto-tag: 21
+        productTypeClasses:
+          type: array
+          description: As defined by the Retail PIM Product Data Harmonizer component
+            (based on Main Product Type)
+          items:
+            type: string
+            example: sofas
+          x-proto-tag: 14
+        quantity:
+          type: integer
+          example: 1
+          x-proto-tag: 1
+        styleGroup:
+          type: string
+          example: IKEA Multi
+          x-proto-tag: 17
+        unitCode:
+          $ref: "#/components/schemas/unitCode"
+      description: >
+        By default only `itemKey` and `quantity` is returned. Use the query
+        parameter `expand` with a value of `ChildItems` to get complete
+        information for all child items. E.g. `GET
+        https://api.salesitem.ingka.com/communications/ru/gb?itemNos=19278540&languageCode=en&expand=ChildItems`.
+      x-reference-proto-tags:
+        businessStructure: 18
+        deleteDateTime: 12
+        insertDateTime: 10
+        isAssemblyRequired: 7
+        isBreathTakingItem: 5
+        isNew: 6
+        itemKey: 2
+        itemKeyGlobal: 3
+        lastChance: 20
+        news: 19
+        productNameGlobal: 4
+        unitCode: 15
+        updateDateTime: 11
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemCommunication:
+      type: object
+      properties:
+        addOns:
+          type: array
+          items:
+            $ref: "#/components/schemas/addOn"
+          x-proto-tag: 32
+        businessStructure:
+          $ref: "#/components/schemas/businessStructure"
+        catalogueReferences:
+          type: array
+          items:
+            $ref: "#/components/schemas/catalogueReference"
+          x-proto-tag: 24
+        childItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemChild"
+          x-proto-tag: 8
+        classUnitKey:
+          $ref: "#/components/schemas/classUnitKey"
+        complementaryItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/complementaryItem"
+          x-proto-tag: 13
+        filterClasses:
+          type: array
+          items:
+            $ref: "#/components/schemas/filterClass"
+          x-proto-tag: 16
+        genericProduct:
+          $ref: "#/components/schemas/genericProduct"
+        isAssemblyRequired:
+          $ref: "#/components/schemas/requiresAssembly"
+        isBreathTakingItem:
+          $ref: "#/components/schemas/breathTakingItem"
+        isNew:
+          $ref: "#/components/schemas/new"
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        itemKeyGlobal:
+          $ref: "#/components/schemas/itemKey"
+        kitchenUnit:
+          $ref: "#/components/schemas/kitchenUnit"
+        lastChance:
+          $ref: "#/components/schemas/lastChance"
+        localisedCommunications:
+          type: array
+          items:
+            $ref: "#/components/schemas/localised"
+          x-proto-tag: 9
+        news:
+          $ref: "#/components/schemas/news"
+        numberOfPackages:
+          type: integer
+          example: 3
+          x-nullable: true
+          x-proto-tag: 7
+        presentationGroupCode:
+          $ref: "#/components/schemas/presentationGroupCode"
+        priceQualityClassification:
+          $ref: "#/components/schemas/priceQualityClassification"
+        productNameGlobal:
+          $ref: "#/components/schemas/name"
+        productTags:
+          type: array
+          items:
+            $ref: "#/components/schemas/productTag"
+          x-proto-tag: 29
+        productTypeClasses:
+          type: array
+          description: As defined by the Retail PIM Product Data Harmonizer component
+            (based on Main Product Type)
+          items:
+            type: string
+            example: sofas
+          x-proto-tag: 14
+        productViewTemplate:
+          $ref: "#/components/schemas/productViewTemplate"
+        professionalAssemblyTime:
+          $ref: "#/components/schemas/professionalAssemblyTime"
+        serviceProductRelations:
+          type: array
+          items:
+            $ref: "#/components/schemas/serviceProductRelation"
+          x-proto-tag: 18
+        styleGroup:
+          type: string
+          example: IKEA Multi
+          x-proto-tag: 17
+        unitCode:
+          $ref: "#/components/schemas/unitCode"
+        experimental:
+          type: array
+          description: Experimental features used for testing which can be removed at any
+            time.
+          items:
+            $ref: "#/components/schemas/experimentalItem"
+          x-proto-tag: 33
+        updateDateTime:
+          type: string
+          format: date-time
+          x-proto-tag: 99
+      x-reference-proto-tags:
+        businessStructure: 21
+        classUnitKey: 19
+        deleteDateTime: 12
+        genericProduct: 28
+        insertDateTime: 10
+        isAssemblyRequired: 6
+        isBreathTakingItem: 4
+        isNew: 5
+        itemKey: 1
+        itemKeyGlobal: 2
+        kitchenUnit: 30
+        lastChance: 25
+        news: 22
+        presentationGroupCode: 27
+        priceQualityClassification: 31
+        productNameGlobal: 3
+        productViewTemplate: 20
+        professionalAssemblyTime: 26
+        unitCode: 15
+        updateDateTime: 11
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemCustomerBenefit:
+      type: string
+      example: Keeps the contents warm for longer and the outside cool, thanks to the
+        double-walled glass.
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    itemCustomerMaterial:
+      type: object
+      properties:
+        partMaterials:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemPartMaterial"
+          x-proto-tag: 2
+        productTypeText:
+          type: string
+          example: Cover for 2-seat section
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemEnvironmentText:
+      type: object
+      properties:
+        productTypeText:
+          type: string
+          example: Standard hinges
+          x-proto-tag: 1
+        text:
+          type: string
+          example: Product is possible to recycle or use for energy recovery, if available
+            in your community.
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemGoodToKnow:
+      type: object
+      properties:
+        text:
+          type: string
+          example: High cabinet frame with ventilated grid, doors, plinth and handles are
+            sold separately.
+          x-proto-tag: 2
+        type:
+          type: string
+          example: Sold separately
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemHero:
+      type: object
+      properties:
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        name:
+          type: string
+          example: IVAR NNN 1 sec/shelves 89x30x179 pine
+          x-nullable: true
+          x-proto-tag: 2
+        upsellArguments:
+          type: array
+          items:
+            $ref: "#/components/schemas/upsellArgument"
+          x-nullable: true
+          x-proto-tag: 3
+      x-reference-proto-tags:
+        itemKey: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemKey:
+      required:
+        - itemNo
+        - itemType
+      type: object
+      properties:
+        itemNo:
+          maxLength: 15
+          minLength: 8
+          type: string
+          description: The number of the item. Identifies an IKEA item together with the
+            type.
+          example: "00263850"
+          x-proto-tag: 2
+        itemType:
+          type: string
+          description: Type of the Item, e.g. 'ART', 'SPR', 'SGR'.
+          example: ART
+          enum:
+            - ART
+            - SPR
+            - CCI
+            - SGR
+            - ADS
+            - OAD
+            - FCO
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.common.v1
+    itemKeyBenefit:
+      required:
+        - headingText
+        - text
+        - type
+      type: object
+      properties:
+        headingText:
+          type: string
+          example: Noise Level
+          x-proto-tag: 4
+        text:
+          type: string
+          example: "Noise level at max. exhaust speed: 60 dB (A)"
+          x-proto-tag: 3
+        type:
+          type: string
+          example: KEY_BENEFIT_NOISE_LEVEL
+          x-proto-tag: 1
+        unitOfMeasure:
+          type: string
+          example: dB (A)
+          x-proto-tag: 5
+        value:
+          type: string
+          example: "60"
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemMeasurements:
+      type: object
+      properties:
+        detailedMeasurements:
+          type: array
+          items:
+            $ref: "#/components/schemas/detailedMeasurement"
+          x-proto-tag: 2
+        referenceMeasurements:
+          type: array
+          items:
+            $ref: "#/components/schemas/referenceMeasurement"
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemMedia:
+      type: object
+      properties:
+        action:
+          $ref: "#/components/schemas/videoAction"
+        altText:
+          type: string
+          example: LANDSKRONA sofa with chaise long
+          x-proto-tag: 6
+        transcript:
+          type: string
+          example: You don’t have to choose between a functional interior or clean
+            exterior. This drawer front lets you have several smaller drawers
+            behind a larger front or door – for both smart storage and a uniform
+            look.
+          x-proto-tag: 13
+        id:
+          type: string
+          example: "0602358"
+          x-proto-tag: 1
+        informationDots:
+          type: array
+          items:
+            $ref: "#/components/schemas/mediaInformationDot"
+          x-proto-tag: 12
+        name:
+          type: string
+          example: LANDSKRONA so3 w chs lng/Grann/Bomstad gld-br/wood MPP
+          x-proto-tag: 5
+        peNo:
+          type: string
+          example: PE680291
+          x-proto-tag: 2
+        poster:
+          type: array
+          description: Only applicable for types `PRODUCT_ASSEMBLY_VIDEO`,
+            `PRODUCT_FEATURE_VIDEO` and `PRODUCT_USAGE_VIDEO`. The image to be
+            shown while the video is downloading, see the
+            [documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video)
+            for the HTML `video` element. The list is sorted in ascending order
+            with regards to image dimensions.
+          items:
+            $ref: "#/components/schemas/videoPoster"
+          x-proto-tag: 10
+        snapshots:
+          type: array
+          description: Only applicable for types `PRODUCT_ASSEMBLY_VIDEO`,
+            `PRODUCT_FEATURE_VIDEO` and `PRODUCT_USAGE_VIDEO`. Still images from
+            a video. The list is sorted in ascending order with regards to which
+            frame, in seconds, that an image represents in the video.
+          items:
+            $ref: "#/components/schemas/videoSnapshot"
+          x-proto-tag: 11
+        thumbnail:
+          $ref: "#/components/schemas/videoThumbnail"
+        typeName:
+          type: string
+          example: MAIN_PRODUCT_IMAGE
+          enum:
+            - MAIN_PRODUCT_IMAGE
+            - INSPIRATIONAL_IMAGE
+            - MEASUREMENT_ILLUSTRATION
+            - MAIN_PRODUCT_ILLUSTRATION
+            - FUNCTIONAL_PRODUCT_IMAGE
+            - QUALITY_PRODUCT_IMAGE
+            - CONTEXT_PRODUCT_IMAGE
+            - PRODUCT_ASSEMBLY_VIDEO
+            - PRODUCT_FEATURE_VIDEO
+            - PRODUCT_USAGE_VIDEO
+            - FOOD_PRODUCT_IMAGE
+            - ENERGY_LABEL_IMAGE
+            - ENERGY_EFFICIENCY_IMAGE
+            - COMPLIANCE_IMAGE
+            - UNIFIED_WATER_LABEL_IMAGE
+            - UNIFIED_WATER_LABEL_SYMBOL_IMAGE
+            - WATER_SENSE_LABEL_IMAGE
+            - CUT_THROUGH_PRODUCT_IMAGE
+            - IMPORTED_PRODUCT_IMAGE
+            - NON_STANDARDIZED_PRODUCT_IMAGE
+            - NON_STANDARDIZED_PRODUCT_VIDEO
+            - REPAIRABILITY_INDEX_SYMBOL
+            - REPAIRABILITY_INDEX_DOCUMENT
+            - DO_NOT_DIY_SYMBOL
+            - ENERGY_STAR_IMAGE
+            - LAW_LABEL_IMAGE
+            - DURABILITY_INDEX_SYMBOL
+            - DURABILITY_INDEX_DOCUMENT
+            - TIPPING_HAZARD_WARNING_SYMBOL
+            - CHARGER_INCLUDED_LABEL
+          x-proto-tag: 4
+        typeNo:
+          type: string
+          example: "00001"
+          x-proto-tag: 3
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/mediaVariant"
+          x-proto-tag: 7
+      x-reference-proto-tags:
+        action: 9
+        thumbnail: 8
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemPackageMeasure:
+      type: object
+      properties:
+        packNo:
+          type: integer
+          example: 1
+          x-proto-tag: 9
+        textImperial:
+          type: string
+          example: 3 "
+          x-proto-tag: 4
+        textMetric:
+          type: string
+          example: 8 cm
+          x-proto-tag: 3
+        type:
+          type: string
+          example: LENGTH
+          x-proto-tag: 1
+        typeName:
+          type: string
+          example: Length
+          x-proto-tag: 2
+        unitImperial:
+          type: string
+          example: '"'
+          x-proto-tag: 8
+        unitMetric:
+          type: string
+          example: cm
+          x-proto-tag: 7
+        valueImperial:
+          type: string
+          example: "3"
+          x-proto-tag: 6
+        valueMetric:
+          type: string
+          example: "8"
+          x-proto-tag: 5
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemPartMaterial:
+      type: object
+      properties:
+        materialText:
+          type: string
+          example: 100% cotton
+          x-proto-tag: 2
+        partText:
+          type: string
+          example: "Total composition:"
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    itemSalesPrice:
+      type: object
+      properties:
+        advertisements:
+          type: array
+          items:
+            $ref: "#/components/schemas/advertisement"
+          x-nullable: true
+          x-proto-tag: 11
+        classUnitKey:
+          $ref: "#/components/schemas/classUnitKey"
+        currencyRank:
+          minItems: 1
+          type: array
+          description: Sorted list of currencies. In most cases it will only have one
+            entry.  In the case that there are multiple entries, the order
+            dictates the priority.  For example, the order that the currencies
+            should be presented towards customers. Meaning that the first entry
+            has the highest priority.
+          example:
+            - EUR
+            - HRK
+          items:
+            type: string
+          x-proto-tag: 10
+        fees:
+          type: array
+          items:
+            $ref: "#/components/schemas/fee"
+          x-nullable: true
+          x-proto-tag: 4
+        isUnitPricePreferred:
+          type: boolean
+          x-proto-tag: 7
+        itemKey:
+          $ref: "#/components/schemas/itemKey"
+        priceAttributes:
+          type: array
+          description: Additional attributes that are used in the communication of sales
+            price. Only to be used for specific purpose information meaning used
+            only by some touchpoints or channels, used only in specific
+            scenarios, used only in specific markets for legal reasons or as a
+            short term exception that will be resolved in the next version.
+            FreeOfFreight enum should only be used for STO requests and is only
+            temporarily exposed for RU requests for testing purposes and could
+            be removed in the future.
+          items:
+            $ref: "#/components/schemas/priceAttribute"
+          x-nullable: true
+          x-proto-tag: 3
+        priceUnit:
+          $ref: "#/components/schemas/priceUnit"
+        salesPrices:
+          type: array
+          items:
+            $ref: "#/components/schemas/salesPrice"
+          x-nullable: true
+          x-proto-tag: 5
+        servicePrices:
+          type: array
+          items:
+            $ref: "#/components/schemas/servicePrice"
+          x-nullable: true
+          x-proto-tag: 8
+        updateDateTime:
+          type: string
+          format: date-time
+          x-proto-tag: 9
+      x-reference-proto-tags:
+        classUnitKey: 1
+        itemKey: 2
+        priceUnit: 6
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    kitchenUnit:
+      type: object
+      properties:
+        value:
+          type: boolean
+          example: true
+          x-proto-tag: 1
+      description: Is the item considered to be a Kitchen Unit
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    languageCode:
+      type: string
+      example: en
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    lastChance:
+      type: object
+      properties:
+        value:
+          type: boolean
+          description: Is the item considered last chance according to RPIM API
+          example: true
+          x-proto-tag: 1
+      description: Deprecated - use productTags instead
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    localeProductTag:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+          enum:
+            - SLEEP_ON_IT_DAYS
+          x-proto-tag: 1
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/localeProductTagValue"
+          x-nullable: true
+          x-proto-tag: 2
+      description: Defines locale-specific tags that can be associated with an item.
+        For example, a tag of type `SLEEP_ON_IT_DAYS` with values.
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    localeProductTagValue:
+      required:
+        - type
+        - value
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - RETURN_POLICY_URL
+            - NUMBER_OF_DAYS
+          x-proto-tag: 1
+        value:
+          type: string
+          x-proto-tag: 2
+      description: The value can be a URL or a number, depending on the type. For
+        RETURN_POLICY_URL, it will be a URL. For NUMBER_OF_DAYS, it will be a
+        number in string format.
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    localised:
+      type: object
+      properties:
+        acknowledgement:
+          $ref: "#/components/schemas/acknowledgement"
+        assemblyEffort:
+          type: array
+          items:
+            $ref: "#/components/schemas/assemblyEffort"
+          x-nullable: true
+          x-proto-tag: 35
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemAttachment"
+          x-proto-tag: 18
+        backoffToHero:
+          $ref: "#/components/schemas/backoffToHero"
+        benefitSummary:
+          type: string
+          example: >
+            Like a dream – a silky-soft duvet cover with a beautiful  luster.
+            Sateen-woven from the finest yarn made of lyocell  and sustainably
+            grown cotton. Natural materials that feel  good against your skin.
+          x-proto-tag: 24
+        benefits:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemCustomerBenefit"
+          x-proto-tag: 12
+        careInstructions:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemCareInstruction"
+          x-proto-tag: 11
+        certificationMedia:
+          type: array
+          items:
+            $ref: "#/components/schemas/certificationMedia"
+          x-proto-tag: 34
+        compliance:
+          type: array
+          items:
+            $ref: "#/components/schemas/compliance"
+          x-proto-tag: 27
+        complianceInformation:
+          type: array
+          items:
+            $ref: "#/components/schemas/complianceInformation"
+          x-proto-tag: 28
+        countryCode:
+          $ref: "#/components/schemas/countryCode"
+        designers:
+          type: array
+          items:
+            $ref: "#/components/schemas/designer"
+          x-proto-tag: 8
+        displayUnit:
+          $ref: "#/components/schemas/displayUnit"
+        environmentTexts:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemEnvironmentText"
+          x-proto-tag: 15
+        filterInformation:
+          $ref: "#/components/schemas/filterInformation"
+        fullLengthTexts:
+          $ref: "#/components/schemas/fullLengthText"
+        goodToKnows:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemGoodToKnow"
+          x-proto-tag: 16
+        itemNameLocal:
+          type: string
+          example: BEKANT desk 160x80 white stained oak veneer/white
+          x-proto-tag: 30
+        keyBenefits:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemKeyBenefit"
+          x-proto-tag: 32
+        languageCode:
+          $ref: "#/components/schemas/languageCode"
+        longBenefits:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemBenefit"
+          x-proto-tag: 13
+        manufacturer:
+          $ref: "#/components/schemas/manufacturer"
+        materials:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemCustomerMaterial"
+          x-proto-tag: 14
+        measurements:
+          $ref: "#/components/schemas/itemMeasurements"
+        media:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemMedia"
+          x-proto-tag: 10
+        packageMeasurements:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemPackageMeasure"
+          x-proto-tag: 17
+        productName:
+          $ref: "#/components/schemas/name"
+        productTags:
+          type: array
+          items:
+            $ref: "#/components/schemas/localeProductTag"
+          x-nullable: true
+          x-proto-tag: 39
+        productType:
+          $ref: "#/components/schemas/productType"
+        seoSlug:
+          $ref: "#/components/schemas/slug"
+        technicalCompliance:
+          type: array
+          items:
+            $ref: "#/components/schemas/technicalCompliance"
+          x-proto-tag: 29
+        technicalInformation:
+          $ref: "#/components/schemas/technicalInformation"
+        validDesign:
+          $ref: "#/components/schemas/validDesign"
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/warning"
+          x-proto-tag: 25
+        benefitsAsIs:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemCustomerBenefit"
+          x-proto-tag: 36
+        benefitSummaryAsIs:
+          type: string
+          example: >
+            Like a dream – a silky-soft duvet cover with a beautiful  luster.
+            Sateen-woven from the finest yarn made of lyocell  and sustainably
+            grown cotton. Natural materials that feel  good against your skin.
+          x-proto-tag: 37
+      x-reference-proto-tags:
+        acknowledgement: 38
+        backoffToHero: 33
+        benefitSummaries: 23
+        colour: 5
+        countryCode: 2
+        displayUnit: 9
+        filterInformation: 22
+        fullLengthTexts: 21
+        languageCode: 1
+        manufacturer: 26
+        measurements: 7
+        productName: 3
+        productType: 4
+        seoSlug: 31
+        technicalInformation: 20
+        validDesign: 6
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    mainProductType:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the Main Product Type (`MPT`), e.g., `SPR table +
+            chair` or `wardrobes`. This field is always in English.
+          x-proto-tag: 1
+        no:
+          type: string
+          description: The unique identifier for the Main Product Type (`MPT`), e.g.,
+            `00038` and `00076`.
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    manufacturer:
+      type: string
+      example: IKEA
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    measurementFilter:
+      type: object
+      properties:
+        textImperial:
+          type: string
+          example: 55 1/8 "
+          x-proto-tag: 4
+        textMetric:
+          type: string
+          example: 140 cm
+          x-proto-tag: 3
+        type:
+          type: string
+          example: WIDTH
+          x-proto-tag: 1
+        typeName:
+          type: string
+          example: Width
+          x-proto-tag: 2
+        unitImperial:
+          type: string
+          example: inch
+          x-proto-tag: 8
+        unitMetric:
+          type: string
+          example: cm
+          x-proto-tag: 7
+        valueImperial:
+          type: string
+          example: 55 1/8
+          x-proto-tag: 6
+        valueMetric:
+          type: string
+          example: "140"
+          x-proto-tag: 5
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    mediaInformationDot:
+      type: object
+      properties:
+        coordinates:
+          $ref: "#/components/schemas/mediaInformationDotCoordinates"
+        header:
+          type: string
+          example: Standard foam
+          x-proto-tag: 3
+        icon:
+          type: string
+          example: mattress-foam
+          x-proto-tag: 2
+        text:
+          type: string
+          example: Gives you all-over support and comfort.
+          x-proto-tag: 4
+      description: Used for dots within images containing specific information on
+        mouse hover, for example cut-through images. The coordinates specify
+        where in the picture the given dot should be positioned.
+      x-reference-proto-tags:
+        coordinates: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    mediaInformationDotCoordinates:
+      type: object
+      properties:
+        x:
+          type: number
+          format: double
+          example: 52.7
+          x-proto-tag: 1
+        y:
+          type: number
+          format: double
+          example: 34
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    mediaVariant:
+      type: object
+      properties:
+        fileMimeType:
+          type: string
+          example: image/jpeg
+          x-proto-tag: 4
+        fileName:
+          type: string
+          example: 0602358_PE680291_S1.JPG
+          x-proto-tag: 5
+        height:
+          type: integer
+          example: 200
+          x-nullable: true
+          x-proto-tag: 2
+        href:
+          type: string
+          description: An SEO friendly URL having the format
+            `https://www.ikea.com/{countryCode}/{languageCode}/images/products/{productName}-{productType}-{validDesignText}__{fileName}.JPG`.
+            If `productName` and/or `productType` don't exist, then the original
+            URL is returned. If `validDesignText` doesn't exist, then it is
+            simply omitted from the URL.
+          example: https://www.ikea.com/se/sv/images/products/gjoera-bed-frame__0666552_PH154359_S4.JPG
+          x-proto-tag: 6
+        quality:
+          type: string
+          example: S2
+          x-proto-tag: 1
+        width:
+          type: integer
+          example: 200
+          x-nullable: true
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    name:
+      type: string
+      example: VIMLE
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    new:
+      type: boolean
+      description: Deprecated - use productTags instead
+      example: true
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    news:
+      type: object
+      properties:
+        validFrom:
+          type: string
+          format: date
+          x-proto-tag: 2
+        validTo:
+          type: string
+          format: date
+          x-proto-tag: 3
+        value:
+          type: boolean
+          description: Is the item considered news according to RPIM API
+          example: true
+          x-proto-tag: 1
+      description: Deprecated - use productTags instead
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    presentationGroupCode:
+      type: string
+      example: ME/FÖ 140
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    priceAttribute:
+      type: object
+      properties:
+        type:
+          maxLength: 50
+          type: string
+          description: Type of additional attribute.
+          enum:
+            - MaximumRetailPrice
+            - FreeOfFreight
+          x-proto-tag: 1
+        value:
+          maxLength: 50
+          type: string
+          description: Value of the additional attribute
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    priceQualityClassification:
+      type: string
+      example: HIGH
+      enum:
+        - BACK_OFF_PRICE
+        - BREATHTAKING_ITEM
+        - HIGH
+        - KNOCK_OUT_PRICE
+        - LOW
+        - MEDIUM
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    priceUnit:
+      type: object
+      properties:
+        priceUnitTexts:
+          type: array
+          items:
+            $ref: "#/components/schemas/priceUnitText"
+          x-nullable: true
+          x-proto-tag: 1
+      x-nullable: true
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    priceUnitText:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          example: US
+          x-proto-tag: 2
+        factorImperial:
+          type: number
+          format: double
+          example: 1.102
+          x-nullable: true
+          x-proto-tag: 7
+        factorMetric:
+          type: number
+          format: double
+          example: 0.5
+          x-nullable: true
+          x-proto-tag: 5
+        languageCode:
+          type: string
+          example: en
+          x-proto-tag: 1
+        textImperial:
+          type: string
+          example: 1.102 lb
+          x-nullable: true
+          x-proto-tag: 4
+        textMetric:
+          type: string
+          example: 0.5 kg
+          x-nullable: true
+          x-proto-tag: 3
+        unitImperial:
+          type: string
+          example: lb
+          x-nullable: true
+          x-proto-tag: 8
+        unitMetric:
+          type: string
+          example: kg
+          x-nullable: true
+          x-proto-tag: 6
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    productTag:
+      type: object
+      properties:
+        name:
+          type: string
+          example: NEW
+          enum:
+            - NEW
+            - LAST_CHANCE
+            - DELIVERY_COST_ADDED
+            - SUITABLE_FOR_BUSINESS
+            - TOP_SELLER
+            - LIMITED_EDITION
+            - ONLINE_EXCLUSIVE
+            - GUARANTEE_1_YEAR
+            - GUARANTEE_2_YEAR
+            - GUARANTEE_3_YEAR
+            - GUARANTEE_5_YEAR
+            - GUARANTEE_6_YEAR
+            - GUARANTEE_10_YEAR
+            - GUARANTEE_15_YEAR
+            - GUARANTEE_25_YEAR
+            - SEASONAL
+            - BREATHTAKING_ITEM
+          x-proto-tag: 1
+        validFrom:
+          type: string
+          format: date
+          x-proto-tag: 3
+        validTo:
+          type: string
+          format: date
+          x-proto-tag: 4
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    productType:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "10210"
+          x-proto-tag: 1
+        name:
+          type: string
+          example: 2-seat sofa
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    productViewTemplate:
+      type: object
+      properties:
+        type:
+          type: string
+          example: TECHNICAL
+          enum:
+            - TECHNICAL
+            - VISUAL
+          x-proto-tag: 1
+        value:
+          type: string
+          example: LOW
+          enum:
+            - LOW
+            - HIGH
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    professionalAssemblyTime:
+      type: object
+      properties:
+        unit:
+          type: string
+          enum:
+            - MINUTES
+          x-proto-tag: 2
+        value:
+          type: integer
+          example: 120
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    referenceMeasurement:
+      type: object
+      properties:
+        imperial:
+          type: string
+          example: 7/3 cu.ft
+          x-proto-tag: 2
+        metric:
+          type: string
+          example: 210/79 l
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    referenceMeasurementFilter:
+      type: object
+      properties:
+        imperial:
+          type: string
+          example: 55 1/8x74 "
+          x-proto-tag: 2
+        metric:
+          type: string
+          example: 140x188 cm
+          x-proto-tag: 1
+        id:
+          type: string
+          example: 140x188
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    requiredTool:
+      type: object
+      properties:
+        includedInPackage:
+          type: boolean
+          example: true
+          x-proto-tag: 3
+        name:
+          type: string
+          example: Allen Key
+          x-proto-tag: 2
+        type:
+          type: string
+          enum:
+            - TOOL_ADJUSTABLE_PLIERS
+            - TOOL_ALLEN_KEY
+            - TOOL_CAULK_GUN
+            - TOOL_CIRCULAR_SAW
+            - TOOL_CLAMP
+            - TOOL_ELECTRIC_SCREWDRIVER_ALLEN
+            - TOOL_ELECTRIC_SCREWDRIVER_CROSS
+            - TOOL_ELECTRIC_SCREWDRIVER_DRILL
+            - TOOL_ELECTRIC_SCREWDRIVER_FLAT
+            - TOOL_GLUE_TUBE
+            - TOOL_HACKSAW
+            - TOOL_HAMMER
+            - TOOL_JIGSAW
+            - TOOL_KNIFE_RETRACTABLE
+            - TOOL_LEVEL
+            - TOOL_MEASURING_TAPE
+            - TOOL_MITER_BOX
+            - TOOL_NIPPERS
+            - TOOL_PAINTBRUSH
+            - TOOL_PAINT_ROLLER
+            - TOOL_PENCIL
+            - TOOL_RULER
+            - TOOL_SANDPAPER
+            - TOOL_SAW
+            - TOOL_SCISSOR
+            - TOOL_SCREWDRIVER_ALLEN
+            - TOOL_SCREWDRIVER_AWL
+            - TOOL_SCREWDRIVER_CROSS
+            - TOOL_SCREWDRIVER_FLAT
+            - TOOL_SPANNER
+            - TOOL_SQUARE
+            - TOOL_STEP_LADDER
+            - TOOL_TAPE
+            - TOOL_WRENCH
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    requiresAssembly:
+      type: boolean
+      example: true
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    salesPrice:
+      type: object
+      properties:
+        changeReason:
+          type: string
+          description: Further information about the specific price.
+          enum:
+            - NewLowerPrice
+            - TimeRestrictedOffer
+            - Temporary
+            - Competition
+            - Discontinued
+          x-proto-tag: 3
+        currencyCode:
+          maxLength: 3
+          type: string
+          description: Currency code for the price values
+          x-proto-tag: 1
+        indicativeDiscount:
+          maximum: 99
+          minimum: 1
+          type: number
+          description: Indicative discount percentage for the `IKEAFamilySalesUnitPrice`
+            price type and the `RegularSalesUnitPrice` price type with reason
+            code `TimeRestrictedOffer`
+          format: integer
+          x-nullable: true
+          x-proto-tag: 11
+        indicativeTotalTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 8
+        lowestPreviousSalesPrice:
+          $ref: "#/components/schemas/salesPricePreviousSalesPrice"
+        previousSalesPrice:
+          $ref: "#/components/schemas/salesPricePreviousSalesPrice"
+        priceExclTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 6
+        priceInclTax:
+          type: number
+          format: double
+          x-proto-tag: 7
+        type:
+          maxLength: 50
+          type: string
+          enum:
+            - RegularSalesUnitPrice
+            - IKEAFamilySalesUnitPrice
+            - RegularEatInSalesUnitPrice
+            - IKEAFamilyEatInSalesUnitPrice
+            - RegularBistroSalesUnitPrice
+            - RegularBistroEatInSalesUnitPrice
+          x-proto-tag: 2
+        unitPrice:
+          $ref: "#/components/schemas/salesPriceUnitPrice"
+        experimentalDiscountAmount:
+          type: number
+          description: The difference of priceInclTax between RegularSalesUnitPrice and
+            IKEAFamilySalesUnitPrice or TimeRestrictedOffer. This is an
+            experimental property and can be removed at any time.
+          format: double
+          x-nullable: true
+          x-proto-tag: 13
+        experimentalDiscountPercentage:
+          type: number
+          description: The percentage difference in `priceInclTax` between
+            `RegularSalesUnitPrice` and `IKEAFamilySalesUnitPrice` or
+            `TimeRestrictedOffer`. This property is experimental and may be
+            removed without notice.
+          format: double
+          x-nullable: true
+          x-proto-tag: 14
+        validFromDate:
+          type: string
+          description: this is available in case changeReason is either Competition,
+            NewLowerPrice, Temporary, TimeRestrictedOffer.
+          format: date
+          x-nullable: true
+          x-proto-tag: 4
+        validToDate:
+          type: string
+          description: this is available in case changeReason is either Competition,
+            NewLowerPrice, Temporary, TimeRestrictedOffer.
+          format: date
+          x-nullable: true
+          x-proto-tag: 5
+      x-reference-proto-tags:
+        lowestPreviousSalesPrice: 12
+        previousSalesPrice: 9
+        unitPrice: 10
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    salesPricePreviousSalesPrice:
+      required:
+        - display
+      type: object
+      properties:
+        display:
+          type: boolean
+          x-proto-tag: 5
+        indicativeTotalTax:
+          type: number
+          format: double
+          example: 0.81
+          x-nullable: true
+          x-proto-tag: 1
+        priceExclTax:
+          type: number
+          format: double
+          example: 8.19
+          x-nullable: true
+          x-proto-tag: 2
+        priceInclTax:
+          type: number
+          format: double
+          example: 9
+          x-proto-tag: 3
+        unitPrice:
+          $ref: "#/components/schemas/salesPriceUnitPrice"
+      x-nullable: true
+      x-reference-proto-tags:
+        unitPrice: 4
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    salesPriceResponse:
+      type: object
+      properties:
+        data:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/itemSalesPrice"
+          x-proto-tag: 1
+        error:
+          $ref: "#/components/schemas/status"
+        traceId:
+          $ref: "#/components/schemas/traceId"
+      x-reference-proto-tags:
+        error: 2
+        traceId: 3
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    salesPriceUnitPrice:
+      required:
+        - display
+      type: object
+      properties:
+        indicativeImperialTotalTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 1
+        indicativeMetricTotalTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 2
+        priceImperialExclTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 3
+        priceImperialInclTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 4
+        priceMetricExclTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 5
+        priceMetricInclTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 6
+        unitPriceTexts:
+          type: array
+          items:
+            $ref: "#/components/schemas/salesPriceUnitPrice_unitPriceTexts"
+          x-nullable: true
+          x-proto-tag: 7
+        display:
+          type: boolean
+          x-proto-tag: 8
+      x-nullable: true
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    salesPriceUnitPrice_unitPriceTexts:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          x-proto-tag: 2
+        languageCode:
+          type: string
+          x-proto-tag: 1
+        unitTextImperial:
+          type: string
+          x-nullable: true
+          x-proto-tag: 4
+        unitTextMetric:
+          type: string
+          x-nullable: true
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    selectionCriteria:
+      type: object
+      properties:
+        typeName:
+          type: string
+          example: color
+          x-proto-tag: 3
+        typeNameGlobal:
+          type: string
+          example: colour
+          x-proto-tag: 2
+        typeNo:
+          type: string
+          example: "00018"
+          x-proto-tag: 1
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/selectionCriteriaValue"
+          x-proto-tag: 4
+      x-options:
+        package: ingka.sellingrange.genericproduct.v1
+    selectionCriteriaValue:
+      type: object
+      properties:
+        itemKeys:
+          type: array
+          items:
+            $ref: "#/components/schemas/itemKey"
+          x-proto-tag: 2
+        value:
+          type: string
+          example: white
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.genericproduct.v1
+    servicePrice:
+      type: object
+      properties:
+        changeReason:
+          type: string
+          description: Further information about the specific price.
+          enum:
+            - NewLowerPrice
+            - TimeRestrictedOffer
+          x-proto-tag: 4
+        currencyCode:
+          maxLength: 3
+          type: string
+          description: Currency code for the price values
+          x-proto-tag: 2
+        indicativeTotalTax:
+          type: number
+          format: double
+          x-nullable: true
+          x-proto-tag: 9
+        previousSalesPrice:
+          $ref: "#/components/schemas/servicePrice_previousSalesPrice"
+        priceExclTax:
+          type: number
+          format: double
+          x-proto-tag: 7
+        priceInclTax:
+          type: number
+          format: double
+          x-proto-tag: 8
+        serviceProductId:
+          type: string
+          description: The id of the service product as defined by the retailer (e.g.
+            BASIC_KITCHEN_INSTALL).
+          x-nullable: true
+          x-proto-tag: 1
+        type:
+          maxLength: 50
+          type: string
+          enum:
+            - RegularSalesUnitPrice
+            - IKEAFamilySalesUnitPrice
+          x-proto-tag: 3
+        validFromDate:
+          type: string
+          format: date
+          x-nullable: true
+          x-proto-tag: 5
+        validToDate:
+          type: string
+          format: date
+          x-nullable: true
+          x-proto-tag: 6
+      x-reference-proto-tags:
+        previousSalesPrice: 10
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    servicePrice_previousSalesPrice:
+      type: object
+      properties:
+        indicativeTotalTax:
+          type: number
+          format: double
+          example: 0.81
+          x-nullable: true
+          x-proto-tag: 3
+        priceExclTax:
+          type: number
+          format: double
+          example: 8.19
+          x-proto-tag: 1
+        priceInclTax:
+          type: number
+          format: double
+          example: 9
+          x-proto-tag: 2
+      x-nullable: true
+      x-options:
+        package: ingka.sellingrange.salesitemprice.v1
+    serviceProductRelation:
+      type: object
+      properties:
+        hideServiceFromCustomer:
+          type: boolean
+          description: Defines if the service is hidden from customers or not. Service
+            that is not visible is only bookable by Coworker systems.
+          x-proto-tag: 8
+        isCoWorkerAssistanceNeeded:
+          type: boolean
+          description: Defines if there is a need for co-worker interaction or if the
+            service product can be bought without co-worker involvement.
+          x-proto-tag: 5
+        isPromoted:
+          type: boolean
+          description: Defines if the related service product should be used in
+            communication of the physical product (e.g. on product views such as
+            PIP).
+          x-proto-tag: 6
+        recommendationRank:
+          type: integer
+          description: Defines the order of importance compared with other related service
+            products in communication with customers (e.g. on a product view
+            such as PIP).
+          format: integer
+          example: 1
+          x-proto-tag: 7
+        relationType:
+          type: string
+          description: Describes the type of relation e.g. if is bought together with, are
+            related to etc.
+          example: SOLD_WITH
+          enum:
+            - SOLD_WITH
+          x-proto-tag: 4
+        serviceKey:
+          $ref: "#/components/schemas/itemKey"
+        serviceProductId:
+          type: string
+          description: The id of the service product as defined by the retailer (e.g.
+            BASIC_KITCHEN_INSTALL).
+          example: BASIC_KITCHEN_INSTALL
+          x-proto-tag: 1
+        serviceProductType:
+          type: string
+          description: Defines the type of service used in communication towards customers
+            (e.g. sofa assembly and furniture assembly are both communicated as
+            assembly).
+          example: ASSEMBLY
+          enum:
+            - ASSEMBLY
+            - PLATFORM_ASSEMBLY
+            - REMOVAL
+          x-proto-tag: 3
+      x-reference-proto-tags:
+        serviceKey: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    slug:
+      type: string
+      example: vimle-2-seat-sofa
+      x-options:
+        package: ingka.sellingrange.undefined.v1
+    status:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: |-
+            The status code, which typically should be a HTTP status code.
+            It can also be an enum value of google.rpc.Code. 
+          format: int32
+        details:
+          type: array
+          description: >-
+            A list of messages that carry the error details. There is a common
+            set of
+
+            message types for APIs to use.
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              description: Properties of the object. Contains field @type with type URL.
+        message:
+          type: string
+          description: |-
+            A developer-facing error message, which should be in English. Any
+            user-facing error message should be localized and sent in the
+            google.rpc.Status.details field, or localized by the client.
+      description: >-
+        The `Status` type defines a logical error model that is suitable for
+        different
+
+        programming environments, including REST APIs and RPC APIs. It is used by
+
+        [gRPC](https://github.com/grpc). The error model is designed to be:
+
+        - Simple to use and understand for most users
+
+        - Flexible enough to meet unexpected needs
+
+        # Overview
+
+        The `Status` message contains three pieces of data: error code, error message,
+
+        and error details. The error code should be an enum value of
+
+        google.rpc.Code, but it may accept additional error codes if needed.  The
+
+        error message should be a developer-facing English message that helps
+
+        developers *understand* and *resolve* the error. If a localized user-facing
+
+        error message is needed, put the localized message in the error details or
+
+        localize it in the client. The optional error details may contain arbitrary
+
+        information about the error. There is a predefined set of error detail types
+
+        in the package `google.rpc` that can be used for common error conditions.
+
+        # Language mapping
+
+        The `Status` message is the logical representation of the error model, but it
+
+        is not necessarily the actual wire format. When the `Status` message is
+
+        exposed in different client libraries and different wire protocols, it can be
+
+        mapped differently. For example, it will likely be mapped to some exceptions
+
+        in Java, but more likely mapped to some error codes in C.
+
+        # Other uses
+
+        The error model and the `Status` message can be used in a variety of
+
+        environments, either with or without APIs, to provide a
+
+        consistent developer experience across different environments.
+
+        Example uses of this error model include:
+
+        - Partial errors. If a service needs to return partial errors to the client,
+            it may embed the `Status` in the normal response to indicate the partial
+            errors.
+        - Workflow errors. A typical workflow has multiple steps. Each step may
+            have a `Status` message for error reporting.
+        - Batch operations. If a client uses batch request and batch response, the
+            `Status` message should be used directly inside batch response, one for
+            each error sub-response.
+        - Asynchronous operations. If an API call embeds asynchronous operation
+            results in its response, the status of those operations should be
+            represented directly using the `Status` message.
+        - Logging. If some API errors are stored in logs, the message `Status` could
+            be used directly after any stripping needed for security/privacy reasons.
+      x-proto-type: google.rpc.Status
+    technicalCompliance:
+      type: object
+      properties:
+        heading:
+          type: string
+          example: Kostnadsspann alla modeller
+          x-proto-tag: 1
+        headingGlobal:
+          type: string
+          example: Cost ranges All models
+          x-proto-tag: 2
+        headingType:
+          type: string
+          example: WATER_CONSUMPTION
+          enum:
+            - AGEING_TIME
+            - AGE_RECOMMENDATION
+            - AIR_FLOW
+            - AIRBORNE_ACOUSTIC
+            - AMBIENT_TEMPERATURE
+            - ANGLE
+            - AREA_OF_USE
+            - AVERAGE_ENERGY_CLASS
+            - AVERAGE_WASHING_TIME
+            - BATTERIES
+            - BEDDING
+            - BRAND
+            - BRIGHTNESS
+            - BURNER_PERFORMANCE
+            - CAPACITY
+            - CAVITY
+            - CAVITY_VOLUME
+            - CE_MARK
+            - CERTIFICATION_DECLARATION
+            - CHILL_COMPARTMENT_VOLUME
+            - CLIMATE_CLASS
+            - COLOUR_RENDERING
+            - COLOUR_TEMPERATURE
+            - CONDENSATION_EFFICIENCY
+            - CONDENSATION_EFFICIENCY_CLASS
+            - CONFORMITY
+            - CONNECTION
+            - CONSTRUCTION_TYPE
+            - CONSUMPTION
+            - CONTAINS_MERCURY
+            - CONTENT
+            - COST_RANGE
+            - CYCLE_TIME
+            - DEFROST_SYSTEM
+            - DEFROST_TYPE
+            - DIMMABLE
+            - DISCLAIMER
+            - DRYER_TYPE
+            - DRYING_EFFICIENCY_CLASS
+            - DURATION_ECO_PROGRAMME
+            - DURATION_LEFT_ON
+            - EFFICIENCY
+            - EFFICIENCY_CLASS_SECONDARY
+            - ELECTRICITY_USE
+            - ENERGY_CONSUMPTION
+            - ENERGY_COST
+            - ENERGY_EFFICIENCY
+            - ENERGY_EFFICIENCY_CLASS
+            - ENERGY_EFFICIENCY_INDEX
+            - ENERGY_EFFICIENCY_RATING
+            - ENERGY_STAR
+            - ENERGY_USED
+            - ENERGY_WATER_CONSUMPTION
+            - ENVIRONMENT_INFO
+            - EPREL_ADDRESS
+            - FAILURE_FRACTION
+            - FILLING_MATERIAL
+            - FINISHED_SIZE
+            - FLOW_RATE
+            - FLUID_DYNAMIC_EFFICIENCY
+            - FLUID_DYNAMIC_EFFICIENCY_CLASS
+            - FOOD_CONTACT
+            - FREEZER_CAPACITY
+            - FREEZER_RATING
+            - FREEZER_TYPE
+            - FROST_FREE_SYSTEM
+            - FROZEN_COMPARTMENT_VOLUME
+            - FUNCTION
+            - GAS_TYPE
+            - GRAPHICAL_ELEMENT
+            - GREASE_FILTER_EFFICIENCY
+            - GREASE_FILTER_EFFICIENCY_CLASS
+            - HEAT_RESISTANT_CABLE
+            - HEAT_SOURCE
+            - HYPERLINK
+            - ICE_FUNCTION
+            - INPUT
+            - INSTALLATION_TYPE
+            - LAMP_LIFE_TIME
+            - LAMP_MERCURY_CONTENT
+            - LICENSE
+            - LIFE
+            - LIGHT_APPEARANCE
+            - LIGHT_SOURCE
+            - LIGHT_SOURCE_TO_FLAMMABLE
+            - LIGHTING_EFFICIENCY
+            - LIGHTING_EFFICIENCY_CLASS
+            - LUMEN_MAINTENANCE_FACTOR
+            - LUMINAIRE_ENERGY_CLASS
+            - LUMINAIRE_LAMPS
+            - LUMINOUS_FLUX
+            - LUMINOUS_INTENSITY
+            - MANUFACTURER
+            - MFG_DATE
+            - MODEL
+            - MODEL_VOLTAGE
+            - MOISTURE_CONTENT
+            - MOUNTING_HOLES
+            - NOISE_LEVEL
+            - OTHER
+            - OUTPUT
+            - PATENTS
+            - PHOTOMETRIC_CODE
+            - PLACE_SETTINGS
+            - PLANTS_POTS
+            - POWER
+            - POWER_CONSUMPTION
+            - POWER_FACTOR
+            - PRESSURE
+            - PRODUCT_CATEGORY
+            - PRODUCT_DESCRIPTION
+            - PRODUCT_FICHE
+            - PRODUCT_INFO_SHEET
+            - PRODUCT_TYPE
+            - PROGRAMME_TIME
+            - PUBLICATION_NUMBER
+            - QR_CODE
+            - RATED_CAPACITY
+            - RATED_POWER
+            - RATING
+            - RECYCLE
+            - REFRIGERATOR_CAPACITY
+            - REPAIRABILITY_INDEX
+            - SCIENTIFIC_NAME
+            - SERVICE_LIFE
+            - SG_NEA_RATING
+            - SG_WELS_RATING
+            - SHELF_LIFE
+            - SPIN_DRYING_EFFICIENCY_CLASS
+            - SPIN_SPEED
+            - STANDARDS
+            - STARTING_TIME
+            - SUPPLIER_INFO
+            - TECHNICAL_FEATURES
+            - TEMPERATURE
+            - TOP_THICKNESS
+            - TOY
+            - TYPE_OF_PRODUCT
+            - UPHOLSTERY
+            - VOLTAGE
+            - VOLUME
+            - WARRANTY_PERIOD
+            - WASH_PROGRAM
+            - WATER_CONSUMPTION
+            - WATER_SENSE
+            - WEB_ADDRESS
+            - WEIGHT
+            - WIRELESSLY_DIMMABLE
+            - CAP_TYPE
+            - CLEAN_AIR_DELIVER_RATE
+            - DURABILITY_INDEX
+            - FILTER_EFFICIENCY
+            - FILTER_TYPE
+            - FLICKER
+            - LABEL_SIZE
+            - QUANTITY
+            - ROOM_SIZE
+            - SPEED_SETTINGS
+            - TYPE
+          x-proto-tag: 4
+        value:
+          type: string
+          example: 2 - 3
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    technicalInformation:
+      required:
+        - informationGroups
+      type: object
+      properties:
+        informationGroups:
+          type: array
+          items:
+            $ref: "#/components/schemas/technicalInformationGroup"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    technicalInformationGroup:
+      required:
+        - headingNo
+        - headingText
+      type: object
+      properties:
+        headingNo:
+          type: string
+          example: "00033"
+          x-proto-tag: 1
+        headingText:
+          type: string
+          example: General
+          x-proto-tag: 2
+        informationParts:
+          type: array
+          items:
+            $ref: "#/components/schemas/technicalInformationPart"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    technicalInformationPart:
+      required:
+        - legal
+        - rangeNo
+        - text
+        - textNo
+      type: object
+      properties:
+        explanatoryText:
+          type: string
+          example: ""
+          x-proto-tag: 6
+        legal:
+          type: boolean
+          example: true
+          x-proto-tag: 5
+        rangeNo:
+          type: string
+          example: "00004"
+          x-proto-tag: 3
+        rangeText:
+          type: string
+          example: Fridges/Freezers
+          x-proto-tag: 4
+        text:
+          type: string
+          example: Energy efficiency class
+          x-proto-tag: 2
+        textImperial:
+          type: string
+          example: ""
+          x-proto-tag: 12
+        textMetric:
+          type: string
+          example: A++
+          x-proto-tag: 9
+        textNo:
+          type: string
+          example: "00033"
+          x-proto-tag: 1
+        unitImperial:
+          type: string
+          example: ""
+          x-proto-tag: 11
+        unitMetric:
+          type: string
+          example: ""
+          x-proto-tag: 8
+        valueImperial:
+          type: string
+          example: ""
+          x-proto-tag: 10
+        valueMetric:
+          type: string
+          example: A++
+          x-proto-tag: 7
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    traceId:
+      type: string
+      description: The unique ID connected to this specific request. Can be used by
+        support to trace the error
+      example: 8e893adf-c115-46bb-ab5d-378c177a096e
+      x-options:
+        package: ingka.sellingrange.common.v1
+    unitCode:
+      type: string
+      example: METER
+      enum:
+        - METER
+        - PIECE
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    unitInformation:
+      type: object
+      properties:
+        unitImperial:
+          type: string
+          example: oz
+          x-proto-tag: 2
+        unitImperialValue:
+          type: string
+          example: "5.29"
+          x-proto-tag: 4
+        unitMetric:
+          type: string
+          example: g
+          x-proto-tag: 1
+        unitMetricValue:
+          type: string
+          example: "150"
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    upsellArgument:
+      type: object
+      properties:
+        longText:
+          type: string
+          example: You can move shelves and adapt the spacing to suit your needs
+          x-nullable: true
+          x-proto-tag: 1
+        shortText:
+          type: string
+          example: Adjustable shelves
+          x-nullable: true
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    validDesign:
+      type: object
+      properties:
+        text:
+          type: string
+          example: Tallmyra black/gray
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    videoAction:
+      type: object
+      properties:
+        fileMimeType:
+          type: string
+          example: image/jpeg
+          x-proto-tag: 3
+        fileName:
+          type: string
+          example: fe000181_890x500_00h_00m_01s.jpg
+          x-proto-tag: 4
+        height:
+          type: integer
+          example: 500
+          x-nullable: true
+          x-proto-tag: 1
+        href:
+          type: string
+          example: https://mmapi.ikea.com/im/productfilms/images/fe000181_890x500_00h_00m_01s.jpg
+          x-proto-tag: 5
+        width:
+          type: integer
+          example: 890
+          x-nullable: true
+          x-proto-tag: 2
+      description: A video action image, which is taken a few seconds into a video
+        where there is supposed to be some "action". Only applicable for types
+        `PRODUCT_ASSEMBLY_VIDEO`, `PRODUCT_FEATURE_VIDEO` and
+        `PRODUCT_USAGE_VIDEO`.
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    videoPoster:
+      type: object
+      properties:
+        fileMimeType:
+          type: string
+          example: image/jpeg
+          x-proto-tag: 4
+        fileName:
+          type: string
+          example: fe000181_1920x1080_00h_00m_01s.jpg
+          x-proto-tag: 5
+        height:
+          type: integer
+          example: 1080
+          x-nullable: true
+          x-proto-tag: 2
+        href:
+          type: string
+          example: https://mmapi.ikea.com/im/productfilms/images/fe000181_1920x1080_00h_00m_01s.jpg
+          x-proto-tag: 6
+        quality:
+          type: string
+          example: S5
+          x-proto-tag: 1
+        width:
+          type: integer
+          example: 1920
+          x-nullable: true
+          x-proto-tag: 3
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    videoSnapshot:
+      type: object
+      properties:
+        fileMimeType:
+          type: string
+          example: image/jpeg
+          x-proto-tag: 4
+        fileName:
+          type: string
+          example: fe000181_114x64_00h_00m_00s.jpg
+          x-proto-tag: 5
+        frame:
+          type: integer
+          description: The frame, in seconds, that this image represents in the video.
+          example: 0
+          x-proto-tag: 3
+        height:
+          type: integer
+          example: 114
+          x-nullable: true
+          x-proto-tag: 1
+        href:
+          type: string
+          example: https://mmapi.ikea.com/im/productfilms/images/fe000181_114x64_00h_00m_00s.jpg
+          x-proto-tag: 6
+        width:
+          type: integer
+          example: 64
+          x-nullable: true
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    videoThumbnail:
+      type: object
+      properties:
+        fileMimeType:
+          type: string
+          example: image/jpeg
+          x-proto-tag: 3
+        fileName:
+          type: string
+          example: fe000181_890x500_00h_00m_01s.jpg?imPolicy=thumbnail
+          x-proto-tag: 4
+        height:
+          type: integer
+          example: 250
+          x-nullable: true
+          x-proto-tag: 1
+        href:
+          type: string
+          example: https://mmapi.ikea.com/im/productfilms/images/fe000181_890x500_00h_00m_01s.jpg?imPolicy=thumbnail
+          x-proto-tag: 5
+        width:
+          type: integer
+          example: 250
+          x-nullable: true
+          x-proto-tag: 2
+      description: A video thumbnail. Only applicable for types
+        `PRODUCT_ASSEMBLY_VIDEO`, `PRODUCT_FEATURE_VIDEO` and
+        `PRODUCT_USAGE_VIDEO`.
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    warning:
+      required:
+        - type
+      type: object
+      properties:
+        texts:
+          type: array
+          items:
+            $ref: "#/components/schemas/warningText"
+          x-proto-tag: 3
+        type:
+          type: string
+          enum:
+            - CHOKING_HAZARD
+            - PROPOSITION_65
+            - TIP_OVER_HAZARD
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    warningText:
+      required:
+        - text
+      type: object
+      properties:
+        text:
+          type: string
+          example: This product can expose you to chemicals including lead, which is known
+            to the State of California to cause cancer and birth defects or
+            other reproductive harm. For more information go to
+            www.P65Warnings.ca.gov.
+          x-proto-tag: 1
+        urls:
+          type: array
+          items:
+            $ref: "#/components/schemas/warningUrl"
+          x-proto-tag: 2
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+    warningUrl:
+      type: object
+      properties:
+        text:
+          type: string
+          example: www.P65Warnings.ca.gov
+          x-proto-tag: 2
+        url:
+          type: string
+          example: https://www.P65Warnings.ca.gov
+          x-proto-tag: 1
+      x-options:
+        package: ingka.sellingrange.salesitemcomm.v1
+  securitySchemes:
+    clientIDHeader:
+      type: apiKey
+      description: Client specific ID (Akamai API Gateway)
+      name: X-Client-ID
+      in: header
+x-global-options:
+  go_package: api
+  java_outer_classname: SalesItemProto
+  java_package: com.ikea.rix.range.model
+  package: ikea.rix.salesitem

@@ -1,0 +1,11 @@
+2025-08-19 21:50:43,987 - DEBUG - Initializing server 'minimal-mcp-server'
+2025-08-19 21:50:43,987 - DEBUG - Registering handler for ListToolsRequest
+2025-08-19 21:50:43,987 - DEBUG - Registering handler for CallToolRequest
+2025-08-19 21:50:43,987 - INFO - Launching MCP server...
+2025-08-19 21:50:43,988 - DEBUG - Using selector: KqueueSelector
+2025-08-19 21:50:43,993 - INFO - Starting MCP stdio server
+2025-08-19 21:50:43,995 - DEBUG - Received message: root=InitializedNotification(method='notifications/initialized', params=None, jsonrpc='2.0')
+2025-08-19 21:50:43,996 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x11a8b8790>
+2025-08-19 21:50:43,996 - INFO - Processing request of type ListToolsRequest
+2025-08-19 21:50:43,996 - DEBUG - Dispatching request of type ListToolsRequest
+2025-08-19 21:50:43,996 - DEBUG - Response sent

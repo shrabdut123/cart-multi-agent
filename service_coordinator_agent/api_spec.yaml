@@ -1,0 +1,32 @@
+openapi: 3.1.0
+info:
+  title: GraphQL API
+  version: 1.0.0
+
+paths:
+  /graphql:
+    post:
+      summary: GraphQL endpoint
+      operationId: fetch-service-prices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: GraphQL query string
+                variables:
+                  type: object
+                  additionalProperties: true
+                  description: Optional variables for the query
+      responses:
+        '200':
+          description: Successful GraphQL response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
