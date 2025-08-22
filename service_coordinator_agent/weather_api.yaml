@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Open-Meteo Weather API
+  description: REST API for retrieving current weather data from Open-Meteo.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.open-meteo.com/v1
+
+paths:
+  /forecast:
+    get:
+      summary: Get weather forecast
+      description: Retrieve current weather data for a given latitude and longitude.
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          example: 48.8566
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          example: 2.333
+        - name: current_weather
+          in: query
+          required: false
+          schema:
+            type: boolean
+          example: true
+      responses:
+        "200":
+          description: Successful weather data response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  latitude:
+                    type: number
+                    example: 48.86
+                  longitude:
+                    type: number
+                    example: 2.3399997
+                  generationtime_ms:
+                    type: number
+                    format: float
+                  utc_offset_seconds:
+                    type: integer
+                  timezone:
+                    type: string
+                    example: GMT
+                  timezone_abbreviation:
+                    type: string
+                    example: GMT
+                  elevation:
+                    type: number
+                  current_weather_units:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        example: iso8601
+                      interval:
+                        type: string
+                        example: seconds
+                      temperature:
+                        type: string
+                        example: "°C"
+                      windspeed:
+                        type: string
+                        example: "km/h"
+                      winddirection:
+                        type: string
+                        example: "°"
+                      is_day:
+                        type: string
+                        example: ""
+                      weathercode:
+                        type: string
+                        example: wmo code
+                  current_weather:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                        example: 2025-08-17T21:15
+                      interval:
+                        type: integer
+                        example: 900
+                      temperature:
+                        type: number
+                        example: 22.8
+                      windspeed:
+                        type: number
+                        example: 8.9
+                      winddirection:
+                        type: integer
+                        example: 40
+                      is_day:
+                        type: integer
+                        example: 0
+                      weathercode:
+                        type: integer
+                        example: 0
